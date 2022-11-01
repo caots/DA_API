@@ -1,0 +1,425 @@
+{
+	"info": {
+		"_postman_id": "9a9136b3-b027-42b8-a2c1-20c6cf5f4a38",
+		"name": "MeasuredSkill Sprint 9",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "admin",
+			"item": []
+		},
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "assessments",
+					"item": [
+						{
+							"name": "get assessment history",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im10Y2pvYnNlZWtlckB5b3BtYWlsLmNvbSIsImlhdCI6MTYxMzU1NTU0NSwiZXhwIjoxNjEzNTU4MTM3fQ.VIS_nUC35IzOIGOyYikqrV4C9vfLOyWRmcwqoooqXG0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "kLXmlEOgONjwCbjdPIuYrjCDSTQWJy",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{api_url}}/assessments/history/:id",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"assessments",
+										"history",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1158611"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get asssessment preview",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTM1NTg2OTksImV4cCI6MTYxMzU2MTI5MX0.i_NBCPHVLhC0eLW3BQj2IooVitr02jl3fWTUtekQXI0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/assessments/:id/:type/preview",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"assessments",
+										":id",
+										":type",
+										"preview"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1158573"
+										},
+										{
+											"key": "type",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create custom assessment",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"121 2\",\n    \"category_id\": 3,\n    \"category_name\": \"1231 23\",\n    \"description\": \"hahah hah\",\n    \"duration\": 20,\n    \"questions\": 2,\n    \"questionList\": [\n        {\n            \"type\": 0,\n            \"title\": \"cho tam giac abc 1 MultipleChoice\",\n            \"weight\": 20,\n            \"full_answers\": \"[{\\\"id\\\":1,\\\"answer\\\":\\\"MultipleChoice 1 \\\",\\\"is_true\\\":0},{\\\"id\\\":2,\\\"answer\\\":\\\"MultipleChoice 2\\\",\\\"is_true\\\":0},{\\\"id\\\":3,\\\"answer\\\":\\\"MultipleChoice 3\\\",\\\"is_true\\\":1}]\"\n        },\n        {\n            \"type\": 1,\n            \"title\": \"cho tam giac abc 2 CheckBoxes\",\n            \"weight\": 30,\n            \"full_answers\": \"[{\\\"id\\\":1,\\\"answer\\\":\\\"CheckBoxes 1 \\\",\\\"is_true\\\":1},{\\\"id\\\":2,\\\"answer\\\":\\\"CheckBoxes 2\\\",\\\"is_true\\\":0},{\\\"id\\\":3,\\\"answer\\\":\\\"CheckBoxes 3\\\",\\\"is_true\\\":1}]\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/assessments/customs",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"assessments",
+										"customs"
+									]
+								},
+								"description": "`duration`: minutes <br>\n`category_id` và `category_name` lấy từ api danh sách category <br>\n`questions` số câu hỏi <br>\n`questionList` là mảng questions sẽ tạo trong đó: <br>\n   `type` : `export const ASSESSMENTS_CUSTOM_QUESTION_TYPE = {MultipleChoice: 0,CheckBoxes: 1, SingleTextBox: 2}` <br>\n   `weight` là weight point. cách validate tương tự như khi add assessment vào job, total = 100.... <br>\n   `is_any_correct`: 0 or 1, nếu ko có thì = 0<br>\n   `full_answers` : là mảng các câu trả lời được JSON.stringfy trong đó:<br>\n        `id`: id này tự tạo.<br>\n        `answer`: là câu trả lời<br>\n        `is_true`: 0 or 1 là câu đó đúng hay ko. với case type=SingleTextBox là dạng nhập text thì is_true luôn = 1<br>"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "applicants",
+					"item": [
+						{
+							"name": "get list by employer",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTM1NTg2OTksImV4cCI6MTYxMzU2MTI5MX0.i_NBCPHVLhC0eLW3BQj2IooVitr02jl3fWTUtekQXI0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/assessments/:id/:type/preview",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"assessments",
+										":id",
+										":type",
+										"preview"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1158573"
+										},
+										{
+											"key": "type",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "jobs",
+					"item": [
+						{
+							"name": "get list company",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobs/companies?name=&page=0&pageSize=100&lat=-90.42291&lon=42.25863&city=Bellevue&state=Iowa&within=25",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobs",
+										"companies"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": ""
+										},
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "100"
+										},
+										{
+											"key": "lat",
+											"value": "-90.42291"
+										},
+										{
+											"key": "lon",
+											"value": "42.25863"
+										},
+										{
+											"key": "city",
+											"value": "Bellevue"
+										},
+										{
+											"key": "state",
+											"value": "Iowa"
+										},
+										{
+											"key": "within",
+											"value": "25"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get company detail",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobs/:id/company",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobs",
+										":id",
+										"company"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": null,
+											"disabled": true
+										},
+										{
+											"key": "page",
+											"value": "0",
+											"disabled": true
+										},
+										{
+											"key": "pageSize",
+											"value": "100",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "214"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "search job by job seeker",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobs/list?q=&location=&orderNo=0&page=1&pageSize=10&employerId=214&travel&percentTravelMin&percentTravelMax&jobType=0&expiredDate&jobFallUnder&seniorityLevel&lat&long&within=25",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobs",
+										"list"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": ""
+										},
+										{
+											"key": "salaryFrom",
+											"value": "20.22",
+											"disabled": true
+										},
+										{
+											"key": "salaryTo",
+											"value": "44444",
+											"disabled": true
+										},
+										{
+											"key": "location",
+											"value": ""
+										},
+										{
+											"key": "orderNo",
+											"value": "0"
+										},
+										{
+											"key": "assessments",
+											"value": "[{\"id\":141809,\"type\":0},{\"id\":141811,\"type\":0}]",
+											"disabled": true
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "searchType",
+											"value": "bookmark",
+											"disabled": true
+										},
+										{
+											"key": "employerId",
+											"value": "214"
+										},
+										{
+											"key": "travel",
+											"value": null
+										},
+										{
+											"key": "percentTravelMin",
+											"value": null
+										},
+										{
+											"key": "percentTravelMax",
+											"value": null
+										},
+										{
+											"key": "jobType",
+											"value": "0"
+										},
+										{
+											"key": "expiredDate",
+											"value": null
+										},
+										{
+											"key": "jobFallUnder",
+											"value": null
+										},
+										{
+											"key": "seniorityLevel",
+											"value": null
+										},
+										{
+											"key": "lat",
+											"value": null
+										},
+										{
+											"key": "long",
+											"value": null
+										},
+										{
+											"key": "within",
+											"value": "25"
+										}
+									]
+								},
+								"description": "- `employerId` : number : id của cty <br>\n- `travel` : number:  export const JOB_PERCENT_TRAVEL = {\n  OnSite: 0,\n  Remote: 1,\n  Hybrid: 2\n} <br>\n- `percentTravelMin`, `percentTravelMax`: number giống salary from To <br>\n- `jobType`: number: export const EMPLOYMENT_TYPE = {\n  FullTime: 0,\n  PartTime: 1,\n  Contract: 2,\n  Temporary: 3,\n  Intership: 4\n}; <br>\n- `expiredDate`: string: time UTC <br>\n- `jobFallUnder`: number:  <br>\n- `seniorityLevel`: number: id of api<br>\n- `lat, long`: number <br>\n- `within` : number x miles <br>"
+							},
+							"response": []
+						},
+						{
+							"name": "migrate lat lon",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpzMUB5b3BtYWlsLmNvbSIsImlhdCI6MTYxMDA5MjQxMywiZXhwIjoxNjEwMDk1MDA1fQ.XjhJxux1FrB75K7shY_D4A1y0x74iyCv_gqKdK3kgDk",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,91 @@
+<html>
+
+<head>
+  <title>Google recaptcha</title>
+</head>
+
+<body>
+  <h1>Google reCAPTCHA Demo</h1>
+  <form id="comment_form" action='v1/user/login' method="post">
+    <input type="text" id="recaptcha" name="g-recaptcha-response" size="40"><br><br>
+    <input type="email" name="email" placeholder="Type your email" size="40"><br><br>
+    <input type="password" name="password" size="40"></textarea><br><br>
+    <input type="submit" name="submit" value="Login"><br><br>
+    <p id="responseMsg"> </p>
+  </form>
+</body>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
+<script>
+  var XSRF_TOKEN = "";
+  var API_URL= "http://localhost:3000/v1";
+  $(document).ready(function () {
+    submit();
+    // get csrf token
+    // $.get('http://localhost:3002/csrfProtection', function(res) {
+    //   XSRF_TOKEN = res;
+    //   genScriptToken(XSRF_TOKEN)
+    // })  
+    genScriptToken()
+  });
+  function submit() {
+    $('#comment_form').submit(function () {
+      $(this).ajaxSubmit({
+        headers: {
+        // "XSRF-TOKEN": XSRF_TOKEN
+        },
+        error: function (xhr) {
+          console.log('Error: ' + xhr.status);
+          if(xhr.responseText) {
+            var res = JSON.parse(xhr.responseText);
+            $('#responseMsg').text('Error: '+ res.message);
+          } else {
+            $('#responseMsg').text('Error: ');
+          }
+        
+        },
+        success: function (response) {
+          console.log(response);
+          $('#responseMsg').text("success");
+        }
+      });
+      //Very important line, it disable the page refresh.
+      return false;
+    });
+  }
+  function genScriptToken(xsrfToken) {
+   
+    $.ajax({
+         url: API_URL + '/reCaptcha/genScriptToken',
+         type: "GET",
+        //  beforeSend: function(xhr){xhr.setRequestHeader('XSRF-TOKEN', xsrfToken);},
+         success: function(data) {
+          var script = new DOMParser().parseFromString(data, 'text/html').head.childNodes;
+          // console.log(script);
+          var rc1src = script[0].getAttribute('src')
+          var rc2Value = script[1].innerHTML;
+          // console.log([rc1src, rc2Value]);
+          window.onload = function() {
+            var s = document.createElement('script');
+            s.src = rc1src;
+            var s1= document.createElement('script');
+            s1.appendChild(document.createTextNode(rc2Value));
+            try {
+              document.body.appendChild(s);
+              setTimeout(() => {  
+                document.body.appendChild(s1);
+              }, 500);
+            } catch (e) {
+              // s.text = code;
+              document.body.appendChild(s);
+            }
+          }
+        }
+      });
+  }
+  function cb(token) {
+    $('#recaptcha').val(token);
+  }
+</script>
+
+</html>

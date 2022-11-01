@@ -1,0 +1,36 @@
+export default interface ICompanyEntities {
+  id: number;
+  company_name?: string;
+  lat?: string;
+  lon?: string;
+  refer_link?: string;
+  company_profile_picture?: string;
+  employer_id?: number;
+  chat_group_id?: number;
+  rate?: number;
+  employer_industry?: string;
+  employer_revenue_min?: number;
+  employer_revenue_max?: number;
+  employer_year_founded?: string;
+  employer_company_photo?: string;
+  employer_company_video?: string;
+  employer_ceo_name?: string;
+  employer_ceo_picture?: string;
+  employer_company_url?: string;
+  employer_company_twitter?: string;
+  employer_company_facebook?: string;
+  city_name?: string;
+  state_name?: string;
+  company_size_min?: number;
+  company_size_max?: number;
+  is_crawl?: number;
+  is_exclude?: number;
+  status_crawl?: number;
+  address_line?: string;
+  description?: string;
+  note?: string;
+  created_at?: string;
+  updated_at?: string;
+  zip_code?: string;
+  is_claimed?: number;
+}

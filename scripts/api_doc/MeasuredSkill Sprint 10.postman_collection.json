@@ -1,0 +1,1129 @@
+{
+	"info": {
+		"_postman_id": "8977d4a5-df7c-4f47-ac14-b24ab21a0312",
+		"name": "MeasuredSkill Sprint 10",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "coupons",
+					"item": [
+						{
+							"name": "add",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"vsfsdf\",\n    \"discount_acc_type\": 1,\n    \"expired_type\": 1,\n    \"expired_from\": \"\",\n    \"expired_to\": \"\",\n    \"discount_for\": 0,\n    \"nbr_used\": 3,\n    \"is_nbr_user_limit\": 0,\n    \"discount_type\": 0,\n    \"discount_value\": 23,\n    \"max_discount_value\": 123,\n    \"status\": 1,\n    \"is_for_all_user\": 0,\n    \"user_available\": [214]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/admin/coupon",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"admin",
+										"coupon"
+									]
+								},
+								"description": "1. Params \n- status: number = export const PAYMENT_COUPON_STATUS = {<br />\n  Inactive: 0, // draf<br />\n  Active: 1,<br />\n  Deleted: 2<br />\n}; <br />\n- discount_type: number = export const COUPON_DISCOUNT_TYPE = {<br />\n  Percentage: 0,<br />\n  FixedDollar: 1<br />\n};<br />\n- discount_for: number = export const COUPON_DISCOUNT_FOR = {<br />\n  Retake: 0,<br />\n  JobPosting: 1,<br />\n  DirectMessage: 2<br />\n};<br />\n- expired_type: number = export const COUPON_EXPIRED_TYPE = {<br />\n  Limit: 0,<br />\n  Unlimit: 1<br />\n};<br /> \n- Khi expired_type = limit thì cần expired_from và expired_to;<br /> \n- discount_acc_type : number = export const ACCOUNT_TYPE = {\n  Employer: 0,\n  JobSeeker: 1,\n};\n- với discount_acc_type = 1. thêm <br /> \n  + \"is_for_all_user\": 0 or 1 nếu all user thì = 1.<br /> \n  + \"user_available\":  mảng id của employer. [214, 215]<br />"
+							},
+							"response": []
+						},
+						{
+							"name": "update",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"123gfg\",\n    \"discount_acc_type\": 0,\n    \"expired_type\": 1,\n    \"expired_from\": \"\",\n    \"expired_to\": \"\",\n    \"discount_for\": 0,\n    \"nbr_used\": 3,\n    \"is_nbr_user_limit\": 0,\n    \"discount_type\": 0,\n    \"discount_value\": 23,\n    \"max_discount_value\": 123,\n    \"status\": 0\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/admin/coupon/:id",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"admin",
+										"coupon",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n     \"code\": \"123gfg\",\n      \"discount_acc_type\": 0,\n      \"expired_type\": 1,\n      \"expired_from\": \"\",\n      \"expired_to\": \"\",\n      \"discount_for\": 0,\n      \"nbr_used\": 3,\n      \"is_nbr_user_limit\": 0,\n      \"discount_type\": 0,\n      \"discount_value\": 23,\n      \"max_discount_value\": 123,\n      \"status\": 0\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/admin/:id",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"admin",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "gets",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n     \"code\": \"123gfg\",\n      \"discount_acc_type\": 0,\n      \"expired_type\": 1,\n      \"expired_from\": \"\",\n      \"expired_to\": \"\",\n      \"discount_for\": 0,\n      \"nbr_used\": 3,\n      \"is_nbr_user_limit\": 0,\n      \"discount_type\": 0,\n      \"discount_value\": 23,\n      \"max_discount_value\": 123,\n      \"status\": 0\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/admin/coupon?accountType=1&page=0&pageSize=10",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"admin",
+										"coupon"
+									],
+									"query": [
+										{
+											"key": "accountType",
+											"value": "1"
+										},
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImFkbWluIjp0cnVlLCJpYXQiOjE2MTcwODk5MTYsImV4cCI6MTYxNzA5MDAwMn0.ppLF_bJcTyail4U4Ap342aa2YtPRWlZCB0Y7vWkap34",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "applicants",
+					"item": []
+				},
+				{
+					"name": "jobs",
+					"item": [
+						{
+							"name": "get list company",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobs/companies?name=&page=0&pageSize=100&lat=-90.42291&lon=42.25863&city=Bellevue&state=Iowa&within=25",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobs",
+										"companies"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": ""
+										},
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "100"
+										},
+										{
+											"key": "lat",
+											"value": "-90.42291"
+										},
+										{
+											"key": "lon",
+											"value": "42.25863"
+										},
+										{
+											"key": "city",
+											"value": "Bellevue"
+										},
+										{
+											"key": "state",
+											"value": "Iowa"
+										},
+										{
+											"key": "within",
+											"value": "25"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get company detail",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobs/:id/company",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobs",
+										":id",
+										"company"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": null,
+											"disabled": true
+										},
+										{
+											"key": "page",
+											"value": "0",
+											"disabled": true
+										},
+										{
+											"key": "pageSize",
+											"value": "100",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "214"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "follows",
+					"item": [
+						{
+							"name": "list follows",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpzMUB5b3BtYWlsLmNvbSIsImlhdCI6MTYxNDkzMDMxNiwiZXhwIjoxNjE0OTMyOTA4fQ.-lQn5ieYjLQIwrZip04XQzsJYvkOTr_3li9nLkYkzpA",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobseeker-follows?q=&orderNo=0&page=0&pageSize=10",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobseeker-follows"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": ""
+										},
+										{
+											"key": "orderNo",
+											"value": "0"
+										},
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								},
+								"description": "`q` : string = employer name <br>\n`orderNo`: number = switch (orderBy) {\n      case 0:\n        // latest\n       \n        break;\n      case 1:\n        // oldest\n      \n        break;\n      case 2:\n        // a-z\n        orders = [\"C.company_name\", \"asc\"];\n        break;\n      case 3:\n        // z-a\n        orders = [\"C.company_name\", \"desc\"];\n        break;\n      \n    } <br>\n\n- `start following` = `created_at` <br>"
+							},
+							"response": []
+						},
+						{
+							"name": "list ids employer follows",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpzMUB5b3BtYWlsLmNvbSIsImlhdCI6MTYxNDkzMDMxNiwiZXhwIjoxNjE0OTMyOTA4fQ.-lQn5ieYjLQIwrZip04XQzsJYvkOTr_3li9nLkYkzpA",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobseeker-follows/ids",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobseeker-follows",
+										"ids"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0",
+											"disabled": true
+										},
+										{
+											"key": "pageSize",
+											"value": "10",
+											"disabled": true
+										}
+									]
+								},
+								"description": "`q` : string = employer name <br>\n`orderNo`: number = switch (orderBy) {\n      case 0:\n        // latest\n       \n        break;\n      case 1:\n        // oldest\n      \n        break;\n      case 2:\n        // a-z\n        orders = [\"C.company_name\", \"asc\"];\n        break;\n      case 3:\n        // z-a\n        orders = [\"C.company_name\", \"desc\"];\n        break;\n      \n    } <br>\n\n- `start following` = `created_at` <br>"
+							},
+							"response": []
+						},
+						{
+							"name": "action follow - unfollow 1 employer",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/jobseeker-follows/:id/:action",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobseeker-follows",
+										":id",
+										":action"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "214"
+										},
+										{
+											"key": "action",
+											"value": "follow"
+										}
+									]
+								},
+								"description": "- id : number = id của employer <br>\n- action: string = 'follow' or 'unfollow' <br>"
+							},
+							"response": []
+						},
+						{
+							"name": "unfollows",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"ids\": \"174, 3\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/jobseeker-follows/",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"jobseeker-follows",
+										""
+									]
+								},
+								"description": "- id : number = id của employer <br>\n- action: string = 'follow' or 'unfollow' <br>"
+							},
+							"response": []
+						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpzMUB5b3BtYWlsLmNvbSIsImlhdCI6MTYxNDkzMDMxNiwiZXhwIjoxNjE0OTMyOTA4fQ.-lQn5ieYjLQIwrZip04XQzsJYvkOTr_3li9nLkYkzpA",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "users",
+					"item": [
+						{
+							"name": "signupToReceiveUpdate",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"ng@yopmail.com\",\n    \"acc_type\": 1,\n    \"first_name\": \"ng@yopmail.com\",\n    \"last_name\": \"ng@yopmail.com\",\n    \"g-recaptcha-response\": \"03AGdBq27-aizbsvxwAg752Z-hF9_6J9ecOU11QnEPNEE8bJi3cvSnh3UJSGhQlBXbL_5oLG-eTkFaytaZr3hIXamNH5o6zqmfOvRk3O1hoMf0MaPfSccQqRPxrFE8SQQYzQkLyF-IIB-fya_2vLAfe55dfvCjPdXJ53y_HRvYyrQ1d5K1bgO0L4J6yY8xLZwOXNnh6CVktYzds_MPmZUDp3N-rtyuN7IDDIY0ktf--mQixSDK9lvwxXpzic7nFjBMS-d_K9EPgr_xLdbxW4kDdLG7qrSodXhB-m1imqVt6MdqFgV_XOWgnpN5EhSGagU3Wgf4Bdt0SYhDQw5vEMbUHW5zesDnF8jJdwfXM1iFbWnOn4dt-ivy1JGB5_4-K0_F0BpjnEcEt0jUgTuN8hvQF9go_Bhd75dYDfP_ug-f1JuZEXEZRjfesToPeaUtbG9CStnm7KFXAuTu\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/user/signupToReceiveUpdate",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"user",
+										"signupToReceiveUpdate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "completeDelegateAccount",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "token",
+											"value": " 123123123h1231231231231",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": " 1234567",
+											"type": "text"
+										},
+										{
+											"key": "first_name",
+											"value": " ng@yopmail.com",
+											"type": "text"
+										},
+										{
+											"key": "last_name",
+											"value": " ng@yopmail.com",
+											"type": "text"
+										},
+										{
+											"key": "phone_number",
+											"value": " 19123123",
+											"type": "text"
+										},
+										{
+											"key": "region_code",
+											"value": " us",
+											"type": "text"
+										},
+										{
+											"key": "employer_title",
+											"value": " CEO",
+											"type": "text"
+										},
+										{
+											"key": "profile_picture",
+											"type": "file",
+											"src": []
+										}
+									],
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/user/completeDelegateAccount",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"user",
+										"completeDelegateAccount"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getDelegateInfo",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "token",
+											"value": " 123123123h1231231231231",
+											"type": "text"
+										}
+									],
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/user/getDelegateInfo",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"user",
+										"getDelegateInfo"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update profile company",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"description\": \"Top technology in Vietnam\",\n    \"company_size_max\": 50,\n    \"company_size_min\": 11,\n    \"employer_industry\": \"Mining\",\n    \"employer_revenue_min\": 1,\n    \"employer_revenue_max\": 2.5,\n    \"employer_year_founded\": \"2012\",\n    \"employer_company_photo\": \"[{\\\"id\\\":1,\\\"name\\\":\\\"tương1quan.png\\\",\\\"url\\\":\\\"/uploads/file/354/1610531169859.png\\\", \\\"type\\\":\\\"image\\\"},{\\\"id\\\":2,\\\"name\\\":\\\"tương2quan.png\\\",\\\"url\\\":\\\"/uploads/file/354/1610531177295.png\\\", \\\"type\\\":\\\"image\\\"},{\\\"id\\\":3,\\\"name\\\":\\\"tương3quan.png\\\",\\\"url\\\":\\\"/uploads/file/354/1610531182743.png\\\", \\\"type\\\":\\\"image\\\"}, {\\\"id\\\":4,\\\"url\\\":\\\"https://www.youtube.com/watch?v=aypgmC6RJGs\\\", \\\"type\\\":\\\"video\\\"}]\",\n    \"employer_ceo_name\": \"Hehe\",\n    \"employer_ceo_picture\": \"/uploads/file/354/1610531336947.jpg\",\n    \"employer_company_url\": \"http://localhost:4200/employer-profile/profile\",\n    \"employer_company_facebook\": \"https://facebook.com/employer-profile-profile\",\n    \"employer_company_twitter\": \"https://twitter.com/employer-profile-profile\",\n    \"company_name\": \"ddddd\",\n    \"company_profile_picture\": \"\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/user/profile",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"user",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update master employer info and step 1",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "email",
+											"value": "127@yopmail.com",
+											"type": "text"
+										},
+										{
+											"key": "first_name",
+											"value": "fff",
+											"type": "text"
+										},
+										{
+											"key": "last_name",
+											"value": "123",
+											"type": "text"
+										},
+										{
+											"key": "employer_title",
+											"value": "Ceo",
+											"type": "text"
+										},
+										{
+											"key": "phone_number",
+											"value": "1123123123",
+											"type": "text"
+										},
+										{
+											"key": "profile_picture",
+											"type": "file",
+											"src": "/Users/nguyenngoc/Project/MeasuredSkill/logo900x900.png"
+										},
+										{
+											"key": "region_code",
+											"value": "",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{api_url}}/user",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"user"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update jobseeker",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "email",
+											"value": "127@yopmail.com",
+											"type": "text"
+										},
+										{
+											"key": "first_name",
+											"value": "222",
+											"type": "text"
+										},
+										{
+											"key": "last_name",
+											"value": "haha",
+											"type": "text"
+										},
+										{
+											"key": "phone_number",
+											"value": "19123123",
+											"type": "text"
+										},
+										{
+											"key": "region_code",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "city_name",
+											"value": "u22",
+											"type": "text"
+										},
+										{
+											"key": "state_name",
+											"value": "ff",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{api_url}}/user",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"user"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "find-candidate",
+					"item": [
+						{
+							"name": "findcandidates",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/find-candidate?page=0&pageSize=10&within=25&assessments=\\[\\{%22assessment_id%22:1162265,%22point%22:34\\},\\{%22assessment_id%22:1162302,%22point%22:33\\},\\{%22assessment_id%22:1162285,%22point%22:33\\}\\]&zipcode=&maxCompensation=1200",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "within",
+											"value": "25"
+										},
+										{
+											"key": "assessments",
+											"value": "\\[\\{%22assessment_id%22:1162265,%22point%22:34\\},\\{%22assessment_id%22:1162302,%22point%22:33\\},\\{%22assessment_id%22:1162285,%22point%22:33\\}\\]"
+										},
+										{
+											"key": "lat",
+											"value": "-85.25049",
+											"disabled": true
+										},
+										{
+											"key": "lon",
+											"value": "31.57184",
+											"disabled": true
+										},
+										{
+											"key": "city",
+											"value": "Abbeville",
+											"disabled": true
+										},
+										{
+											"key": "state",
+											"value": "Alabama",
+											"disabled": true
+										},
+										{
+											"key": "zipcode",
+											"value": ""
+										},
+										{
+											"key": "onlyBookmark",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "maxCompensation",
+											"value": "1200"
+										}
+									]
+								},
+								"description": "`assessments` : string = JSON.stringfy của mảng các assessment vd: [{\"assessment_id\": 1158573, \"point\": 50}, {\"assessment_id\": 1158596, \"point\": 30},  {\"assessment_id\": 1158598, \"point\": 20}] <br />\n\n\n\n- Response <br />\n    - bookmarked = 1 or 0 <br />\n    - total_point là weighting <br />\n    -  \"weight_1158573\": 90, \"weight_1158596\": null, \"weight_${assessment_id}\": 0 : là điểm của từng assessment_id"
+							},
+							"response": []
+						},
+						{
+							"name": "getJobToInvite",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTY2NTU2MDAsImV4cCI6MTYxNjY1NTY4Nn0.8voApoEq8VDJ3fhDw9qs8TlcgxKCqhssHjy9TwJ98lI",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/find-candidate/getJobToInvite?page=0&pageSize=100&jobseekerId=253",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate",
+										"getJobToInvite"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "100"
+										},
+										{
+											"key": "jobseekerId",
+											"value": "253"
+										},
+										{
+											"key": "q",
+											"value": "tests",
+											"disabled": true
+										}
+									]
+								},
+								"description": "`assessments` : string = JSON.stringfy của mảng các assessment vd: [{\"assessment_id\": 1158573, \"point\": 50}, {\"assessment_id\": 1158596, \"point\": 30},  {\"assessment_id\": 1158598, \"point\": 20}]"
+							},
+							"response": []
+						},
+						{
+							"name": "invitedJob",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTY2NTU2MDAsImV4cCI6MTYxNjY1NTY4Nn0.8voApoEq8VDJ3fhDw9qs8TlcgxKCqhssHjy9TwJ98lI",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"jobseekerId\": 253,\n    \"jobIds\": [636, 613]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/find-candidate/invited",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate",
+										"invited"
+									]
+								},
+								"description": "`assessments` : string = JSON.stringfy của mảng các assessment vd: [{\"assessment_id\": 1158573, \"point\": 50}, {\"assessment_id\": 1158596, \"point\": 30},  {\"assessment_id\": 1158598, \"point\": 20}]"
+							},
+							"response": []
+						},
+						{
+							"name": "request unmark",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTY2NTU2MDAsImV4cCI6MTYxNjY1NTY4Nn0.8voApoEq8VDJ3fhDw9qs8TlcgxKCqhssHjy9TwJ98lI",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/find-candidate/requestUnmask/:id",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate",
+										"requestUnmask",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								},
+								"description": "`assessments` : string = JSON.stringfy của mảng các assessment vd: [{\"assessment_id\": 1158573, \"point\": 50}, {\"assessment_id\": 1158596, \"point\": 30},  {\"assessment_id\": 1158598, \"point\": 20}]"
+							},
+							"response": []
+						},
+						{
+							"name": "bookmark",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTY2NTU2MDAsImV4cCI6MTYxNjY1NTY4Nn0.8voApoEq8VDJ3fhDw9qs8TlcgxKCqhssHjy9TwJ98lI",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"bookmark\": 1\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/find-candidate/bookmark/:id",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate",
+										"bookmark",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "253"
+										}
+									]
+								},
+								"description": "- bookmark: number = 0 or 1 <br />\n- id là jobseekerId"
+							},
+							"response": []
+						},
+						{
+							"name": "payment for dm",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"paymentType\": 8,\n    \"numCredit\": 1,\n    \"ssl_token\": \"4692536310000002\",\n    \"isSaveCard\": 1,\n    \"jobseekerInfo\": {\n        \"id\":253,\n        \"title\": \"Ngoc\",\n        \"avatar\": \"\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{api_url}}/find-candidate/payment",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate",
+										"payment"
+									]
+								},
+								"description": "- bookmark: number = 0 or 1 <br />\n- id là jobseekerId"
+							},
+							"response": []
+						},
+						{
+							"name": "get Assessments for potential",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{api_url}}/find-candidate/getAssessments?page=0&pageSize=100&jobseekerId=253&q=&notInAssessmentIds=1158573,1158596",
+									"host": [
+										"{{api_url}}"
+									],
+									"path": [
+										"find-candidate",
+										"getAssessments"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "pageSize",
+											"value": "100"
+										},
+										{
+											"key": "jobseekerId",
+											"value": "253"
+										},
+										{
+											"key": "q",
+											"value": ""
+										},
+										{
+											"key": "notInAssessmentIds",
+											"value": "1158573,1158596"
+										}
+									]
+								},
+								"description": "`assessments` : string = JSON.stringfy của mảng các assessment vd: [{\"assessment_id\": 1158573, \"point\": 50}, {\"assessment_id\": 1158596, \"point\": 30},  {\"assessment_id\": 1158598, \"point\": 20}]"
+							},
+							"response": []
+						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUxcDJAeW9wbWFpbC5jb20iLCJpYXQiOjE2MTgyODkwMjcsImV4cCI6MTYxODI4OTExM30.l-gR0JtVOxD_rVdea9Qiyvlxst-kdMYWVHfgnhSRkNI",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpzMUB5b3BtYWlsLmNvbSIsImlhdCI6MTYxMDA5MjQxMywiZXhwIjoxNjEwMDk1MDA1fQ.XjhJxux1FrB75K7shY_D4A1y0x74iyCv_gqKdK3kgDk",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	]
+}
