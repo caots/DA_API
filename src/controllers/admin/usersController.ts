@@ -7,7 +7,6 @@ import UserModel from "@src/models/user";
 import JobSeekerAssessmentsService from "@src/services/jobSeekerAssessmentsService";
 import UserService from "@src/services/user";
 import ImageUtils from "@src/utils/image";
-import MailUtils from "@src/utils/sendMail";
 import { mapUserAndCompanyData } from "@src/utils/userUtils";
 import MsValidate from "@src/utils/validate";
 import { NextFunction, Request, Response } from "express";
@@ -263,10 +262,6 @@ export default class AdminUserController {
       const update = await userService.update(currentUser.id, updateParam as UserModel);
       if (update) {
         delete update.password;
-        if (status == USER_STATUS.deactive) {
-          const mailUtil = new MailUtils();
-          mailUtil.accountSuspended(update.email, update).then();
-        }
         return ok(update, req, res);
       }
       return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
@@ -294,12 +289,8 @@ export default class AdminUserController {
       }
       const result = await userService.deleles(ids, action);
       if (result) {
-        const mailUtil = new MailUtils();
         ids.map(async (id: number) => {
           const user = await userService.findById(id);
-          if (user) {
-            mailUtil.accountSuspended(user.email, user).then();
-          }
         })
         return ok({ message: "success" }, req, res);
       }

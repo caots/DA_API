@@ -1,4 +1,4 @@
-import { ACCOUNT_TYPE, APPLICANT_STATUS, ASSESSMENTS_TYPE, EMPLOYMENT_TYPE, EXCLUDE_CRAWL, JOB_PERCENT_TRAVEL, JOB_SALARY_TYPE, JOB_SEEKER_ASSESSMENT_STATUS, JOB_STATUS, ORDER_NO, PAGE_SIZE, PROPOSED_CONPENSATION, SEARCH_JOB_TYPE, SENIORITY_LEVEL, USER_STATUS } from "@src/config";
+import { ACCOUNT_TYPE, APPLICANT_STATUS, ASSESSMENTS_TYPE, EMPLOYMENT_TYPE, EXCLUDE_CRAWL, JOB_PERCENT_TRAVEL, JOB_SALARY_TYPE, JOB_SEEKER_ASSESSMENT_STATUS, JOB_STATUS, PAGE_SIZE, PROPOSED_CONPENSATION, SEARCH_JOB_TYPE, SENIORITY_LEVEL, USER_STATUS } from "@src/config";
 import { JOB_TYPE } from '@src/config/index';
 import { logger } from "@src/middleware";
 import HttpException from "@src/middleware/exceptions/httpException";
@@ -674,7 +674,7 @@ export default class JobsService {
     createDateFrom, createDateTo,
     location,
     q = "",
-    assessments = [],
+    category,
     orderNo = 0,
     page = 0, pageSize = PAGE_SIZE.Jobs, jobType = []
   )
@@ -763,19 +763,8 @@ export default class JobsService {
       if (location) {
         query = query.where("jobs.city_name", location);
       }
-      if (assessments.length > 0) {
-        query = query.whereExists(builder =>
-          assessments.forEach((assemssmentId: number) => {
-            const whereClaues = assemssmentId != -1 ? ["job_assessments.assessment_id", assemssmentId] :
-              ["job_assessments.assessment_type", ASSESSMENTS_TYPE.Custom];
-            builder = builder.orWhereExists(
-              JobAssessmentsModel.query()
-                .select("job_assessments.id")
-                .whereColumn("job_assessments.jobs_id", "jobs.id")
-                .whereColumn(`${whereClaues[0]}`, whereClaues[1])
-            )
-          })
-        );
+      if (category) {
+        query = query.where("jobs.jobs_category_ids", category);
       }
       return query
         .orderBy(orderArray[0], orderArray[1])
@@ -861,37 +850,7 @@ export default class JobsService {
       ];
       let jsas = [];
       // logic best match
-      if (orderNo == ORDER_NO.BestMatch) {
-        if (jobSeekerId > 0) {
-          const jsaService = new JobSeekerAssessmentsService();
-          jsas = await jsaService.getJobsekkerAssessment(jobSeekerId, JOB_SEEKER_ASSESSMENT_STATUS.Taked);
-          if (jsas.length > 0) {
-            const listWeightPointAss = await JobAssessmentsModel.raw(`
-              select JSAC.weight, JA.point as total_point from job_assessments as JA 
-              inner join  (select JSA.assessment_id, JSA.assessment_type, JSA.weight from job_seeker_assessments as JSA where
-              JSA.status = ${JOB_SEEKER_ASSESSMENT_STATUS.Taked} and JSA.is_deleted=0 and JSA.job_seeker_id =  ${jobSeekerId}) as JSAC ON
-              JSAC.assessment_id = JA.assessment_id and JSAC.assessment_type = JA.assessment_type 
-              inner join jobs on jobs.id = JA.jobs_id group by (JA.assessment_id)
-            `)
-            let totalPercent = 100;
-            if(listWeightPointAss[0].length > 0){
-              let sum = 0;
-              listWeightPointAss[0].map(assessment => {
-                if(assessment.weight > 0) sum += assessment.total_point;
-              });
-              totalPercent = sum;
-            }
-            const select = await raw(`(select SUM((JSAC.weight * JA.point) /${totalPercent}) from job_assessments as JA inner join ` +
-              `(select JSA.assessment_id, JSA.assessment_type, JSA.weight from job_seeker_assessments as JSA where` +
-              ` JSA.status = ${JOB_SEEKER_ASSESSMENT_STATUS.Taked} and JSA.is_deleted=0 and JSA.job_seeker_id = ${jobSeekerId}) as JSAC ON` +
-              ` JSAC.assessment_id = JA.assessment_id and JSAC.assessment_type = JA.assessment_type where JA.jobs_id = jobs.id)` +
-              ` as total_point`);
-            selects.push(select);
-          }
-        } else {
-          // hot job
-        }
-      }
+      
       const orderArray = getOrder(orderNo, jsas.length);
       let query = JobsModel.query()
         // .select(selects)

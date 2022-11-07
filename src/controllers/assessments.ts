@@ -1,6 +1,6 @@
 import { CHAT_CONTENT_TYPE } from "@src/chatModule/lib/config";
 import config, {
-  ACCOUNT_TYPE, ASSESSMENTS_TYPE, ASSESSMENT_STATUS, GA_EVENT_ACTION, GA_EVENT_CATEGORY, JOB_SEEKER_ASSESSMENT_LOG_STATUS,
+  ACCOUNT_TYPE, ASSESSMENTS_TYPE, ASSESSMENT_STATUS, JOB_SEEKER_ASSESSMENT_LOG_STATUS,
   JOB_SEEKER_ASSESSMENT_STATUS, MESSAGE_BOT_TAKE_FIRST_ASSESSMENT, PAGE_SIZE, URL_IMOCHA
 } from "@src/config";
 import { ASSESSMENT_MESSAGE, COMMON_ERROR, COMMON_SUCCESS } from "@src/config/message";
@@ -15,7 +15,6 @@ import BillingSettingsService from "@src/services/billingSettingsService";
 import JobSeekerAssessmentsService from "@src/services/jobSeekerAssessmentsService";
 import JobsService from "@src/services/jobsService";
 import UserBll from "@src/services/user";
-import AnalyticUtils from "@src/utils/analyticUtils";
 import HttpRequestUtils from "@src/utils/iMochaUtils";
 import { isSame } from "@src/utils/stringUtils";
 import MsValidate from "@src/utils/validate";
@@ -209,9 +208,9 @@ export default class AssessmentsController {
       const jsaUpdate = new JobSeekerAssessmentsModel();
       jsaUpdate.weight = weight;
       if (!jsa.totalTake) {
-        jsa.totalTake = 1;
+        jsaUpdate.totalTake = 1;
       } else {
-        jsa.totalTake = jsa.totalTake + 1;
+        jsaUpdate.totalTake = jsa.totalTake + 1;
       }
       jsaUpdate.do_exam_at = null;
       jsaUpdate.status = JOB_SEEKER_ASSESSMENT_STATUS.Taked;
@@ -560,14 +559,6 @@ export default class AssessmentsController {
         case JOB_SEEKER_ASSESSMENT_LOG_STATUS.TestLeft:
           break;
       }
-
-      AnalyticUtils.logEvent(GA_EVENT_CATEGORY.ASSESSMENT_MOCHA,
-        jsaLog.Status == JOB_SEEKER_ASSESSMENT_LOG_STATUS.InProgress ? GA_EVENT_ACTION.ASSESSMENT_MOCHA_INPROGRESS
-          : jsaLog.Status == JOB_SEEKER_ASSESSMENT_LOG_STATUS.Complete ? GA_EVENT_ACTION.ASSESSMENT_MOCHA_COMPLETE
-            : GA_EVENT_ACTION.ASSESSMENT_MOCHA_TESTLEFT,
-        jsaLog.Status == JOB_SEEKER_ASSESSMENT_LOG_STATUS.Complete ? (jsaLog.weight + '') : null
-      );
-
       jsaUpdate.current_testStatus = jsaLog.Status;
       const update = await jsaService.update(jsa.id, jsaUpdate);
       logger.info("jsa update:");

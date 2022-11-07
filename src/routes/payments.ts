@@ -1,7 +1,6 @@
 import { ACCOUNT_TYPE, PERMISSION_EMPLOYER } from "@src/config";
 import AuthController from "@src/controllers/auth";
 import PaymentController from "@src/controllers/payments";
-import { verifiedRC } from "@src/middleware";
 import { checkRole, permissionsEmp } from "@src/middleware/roles";
 import { Router } from "express";
 
@@ -37,13 +36,13 @@ export class PaymentsRouter {
   }
 
   private config() {
-    this.router.post("/employer", verifiedRC, this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
+    this.router.post("/employer", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
       permissionsEmp(PERMISSION_EMPLOYER.ChangeBilling), this.paymentController.paymentForEmployer);
-    this.router.post("/buyMoreEmployer", verifiedRC, this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
+    this.router.post("/buyMoreEmployer", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
       permissionsEmp(PERMISSION_EMPLOYER.ChangeBilling), this.paymentController.paymentForBuyMorePrivateJob);
-    this.router.post("/jobseeker", verifiedRC, this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker),
+    this.router.post("/jobseeker", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker),
       this.paymentController.paymentForJobseeker);
-    this.router.post("/upgradeJob", verifiedRC, this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
+    this.router.post("/upgradeJob", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
       permissionsEmp(PERMISSION_EMPLOYER.ChangeBilling), this.paymentController.paymentForUpgradeJob);
     this.router.get("/setting", this.authController.saveCurrentUser, this.paymentController.getBillingSetting);
     this.router.get("/history", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker, ACCOUNT_TYPE.Employer),

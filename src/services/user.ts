@@ -609,10 +609,6 @@ export default class UserBll {
       const userModel = new UserModel();
       userModel.is_user_deleted = is_user_deleted;
       const result = await UserModel.query().updateAndFetchById(id, userModel);
-      if (userModel.is_user_deleted) {
-        const mailUtil = new MailUtils();
-        mailUtil.closedAccount(result.email, result).then();
-      }
       const userSession = new UserSessionRepository(UserSessionModel);
       await userSession.removeAllByUserId(id);
       return result;
@@ -800,9 +796,6 @@ export default class UserBll {
       //send mail
       const mailUtil = new MailUtils();
       const registUser = await this.findById(userRefer.register_id);
-      if (user.status == COMMON_STATUS.Active && user.is_deleted == 0 && user.is_user_deleted == 0) {
-        mailUtil.freeRetakeCreditEarned(user.email, user, registUser, jobSeekerSettings.nbr_referral_for_one_validation).then();
-      }
       UserRefersModel.query().updateAndFetchById(userRefer.id, { is_applied: 1 } as UserRefersModel).then();
       // const userRef = await UserRefersModel.query().delete(userRefersModel);
       return true;

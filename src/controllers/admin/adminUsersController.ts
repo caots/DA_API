@@ -88,13 +88,8 @@ export default class AdminUsersController {
 
       userForgot.email = admin.email;
       const result = await userSessionService.genTokenForgot(userForgot);
-      const sendMail = await mailUtil.inviteAdminAccount(admin.email, result.token, additionalData);
-      if (sendMail) {
-        await adminUsersService.createAdminMember(admin);
-        return ok({ message: COMMON_SUCCESS.default }, req, res);
-      } else {
-        return badRequest({ message: COMMON_ERROR.sendMailError }, req, res);
-      }
+      await adminUsersService.createAdminMember(admin);
+      return ok({ message: COMMON_SUCCESS.default }, req, res);
     } catch (err) {
       next(err);
     }

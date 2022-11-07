@@ -1,6 +1,6 @@
 import { ZoomService } from "@src/chatModule/service/room";
 import {
-  ACCOUNT_TYPE, ASSESSMENTS_TYPE, ASSESSMENT_STATUS, GA_EVENT_ACTION, GA_EVENT_CATEGORY, JOBSEEKER_RATTING_TYPE,
+  ACCOUNT_TYPE, ASSESSMENTS_TYPE, ASSESSMENT_STATUS, JOBSEEKER_RATTING_TYPE,
   JOB_SALARY_TYPE, JOB_SEEKER_ASSESSMENT_STATUS,
   JOB_STATUS, NOTIFICATION_TYPE, PAGE_SIZE, USER_STATUS
 } from "@src/config";
@@ -11,7 +11,6 @@ import JobApplicantsModel from "@src/models/job_applicants";
 import JobAssessmentsModel from "@src/models/job_assessments";
 import { default as UserModel } from "@src/models/user";
 import UserNotificationModel from "@src/models/user_notifications";
-import AnalyticUtils from "@src/utils/analyticUtils";
 import { cloneDeep } from "lodash";
 import { raw } from "objection";
 import Zipcodes from "zipcodes";
@@ -248,8 +247,6 @@ export default class FindCandidateService {
               }),
             })
           });
-
-          AnalyticUtils.logEvent(GA_EVENT_CATEGORY.NOTIFICATION,GA_EVENT_ACTION.NOTIFICATION_SEND_FIND_CANDIDATES, null, 1);
 
           const applicantBody = new JobApplicantsModel();
           applicantBody.job_sekker_id = jobseekerId;

@@ -1,11 +1,10 @@
-import config, { ACCOUNT_TYPE, EXPORT_TYPE, JOB_STATUS, PAGE_SIZE, PAYMENT_AMOUNT_MIN, PAYMENT_TYPE, PAYMENT_TYPE_STR, TASKSCHEDULE_TYPE } from "@src/config";
+import { ACCOUNT_TYPE, EXPORT_TYPE, JOB_STATUS, PAGE_SIZE, PAYMENT_AMOUNT_MIN, PAYMENT_TYPE, PAYMENT_TYPE_STR } from "@src/config";
 import { logger } from "@src/middleware";
 import HttpException from "@src/middleware/exceptions/httpException";
 import BillingSettingEmployerModel from "@src/models/employer_billing_settings";
 import JobsModel from "@src/models/jobs";
 import PaymentCartsModel, { PaymentConvergeLogsModel, PaymentCouponsModel, PaymentCouponUserHistoryModel, PaymentsModel, UserBillingInfoModel } from "@src/models/payments";
 import { IEmployerPaymentHistoryEntities, IJobDetailPaymentHistory, IJobSeekerPaymentHistoryEntities, IProductAssessmentEntities, IProductJobEntities, IProductJobseekerEntities } from "@src/models/payments/entities";
-import TaskScheduleModel from "@src/models/task_schedule";
 import UserModel from "@src/models/user";
 import PaymentExportUtils from "@src/utils/paymentExportUtils";
 import ConvergeUtils from "@src/utils/paymetCorvegeUtils";
@@ -17,15 +16,15 @@ import BillingSettingsService from "./billingSettingsService";
 import JobsService from "./jobsService";
 import PaymentCouponService from "./paymentCouponService";
 const avaConfig = {
-  appName: config.AVATAX_APP_NAME,
-  appVersion: config.AVATAX_APP_VERSION,
-  environment: config.AVATAX_ENVIROMENT,
-  machineName: config.AVATAX_MACHINE_NAME,
+  appName: 'config.AVATAX_APP_NAME',
+  appVersion: 'config.AVATAX_APP_VERSION',
+  environment:' config.AVATAX_ENVIROMENT',
+  machineName: 'config.AVATAX_MACHINE_NAME',
 };
-const avaCompanyCode = config.AVATAX_COMPANY_CODE;
+const avaCompanyCode = 'config.AVATAX_COMPANY_CODE';
 const avaCreds = {
-  username: config.AVATAX_USERNAME,
-  password: config.AVATAX_PASSWORD
+  username: 'config.AVATAX_USERNAME',
+  password: 'config.AVATAX_PASSWORD'
 };
 const avaClient = new Avatax(avaConfig).withSecurity(avaCreds);
 
@@ -241,194 +240,38 @@ export default class PaymentsService {
     }
   }
   public async paymentEmployer(
-    user: UserModel, carts: any[], isSaveCard = 1,
-    paymentType = null, numCredit = 0, jobseekerInfo: any = null,
-    couponCode: string, billingInfo: UserBillingInfoModel) {
+    user: UserModel, carts: any[], jobseekerInfo: any = null) {
     try {
-      const amountObj = await this.calcTotalAmountEmployer(carts, false, paymentType, numCredit);
-      let newPayment;
-      const {
-        paymentConvergeLog,
-        totalAmount,
-        tax,
-        resultTax,
-        isSaveAvatax,
-        checkCouponObj,
-        discountValue,
-        isSaveCoupon
-      } = await this._checkCouponAndTax(user, amountObj.amount, couponCode, billingInfo, paymentType);
-      const scrappy = await transaction(
-        PaymentConvergeLogsModel, PaymentsModel, PaymentCartsModel, JobsModel, UserModel,
-        async (paymentConvergeLogsModel, paymentsModel, paymentCartsModel, jobsModel, userModel) => {
-          // remove payment cart
-          if (carts.length > 0) {
-            const cartIds = carts.map(cart => cart.id);
-            paymentCartsModel.query().delete().whereIn("id", cartIds).then();
-            const updateJob = await Promise.all(carts.map(async (cart) => {
-              let job = cart.job as JobsModel;
-              const jobUpdate = this.buyJob(job, cart);
-              Object.assign(job, jobUpdate);
-              await jobsModel.query().updateAndFetchById(job.id, jobUpdate);
-              if (job.is_private == 0) {
-                TaskScheduleModel.query().insert({
-                  subject_id: job.id,
-                  type: TASKSCHEDULE_TYPE.NewPostsJobseekers,
-                  metadata: JSON.stringify({
-                    jobDetails: {
-                      id: job.id,
-                      employer_id: job.employer_id,
-                      title: job.title,
-                      expired_at: job.expired_at,
-                    },
-                  })
-                }).then();
-              }
-            }))
-          }
-          // add payment
-          const paymentObj = this._createPaymentObj(paymentConvergeLog, isSaveCoupon, totalAmount, amountObj.amount, discountValue, checkCouponObj, tax, user)
-          paymentObj.payment_type = this.getPaymentEmployerType(user, carts, paymentType);
-          paymentObj.products = this.genProductsEmployer(carts, paymentType, amountObj.nbr, jobseekerInfo);
-          newPayment = await paymentsModel.query().insert(paymentObj);
-          logger.info(`add payment ${JSON.stringify(newPayment)}`);
-          if (amountObj.nbr || isSaveCard) {
-            let userUpdate = {};
-            if (amountObj.nbr) {
-              const nbrCredit = user.nbr_credits ? user.nbr_credits + amountObj.nbr : amountObj.nbr;
-              Object.assign(userUpdate, { nbr_credits: nbrCredit });
-            }
-            if (isSaveCard) {
-              Object.assign(userUpdate, { converge_ssl_token: user.converge_ssl_token });
-            }
-            await userModel.query().updateAndFetchById(user.id, userUpdate as UserModel);
-          }
-          // create payment log
-          if (paymentConvergeLog) {
-            // send mail
-            this.exportPaymentReceiptPdf(user, newPayment, billingInfo).then(fileInfo => {
-              const mail = new MailUtils();
-              if (!fileInfo.path) { return; }
-              newPayment.invoice_receipt_url = fileInfo.path;
-              PaymentsModel.query().updateAndFetchById(newPayment.id, { invoice_receipt_url: fileInfo.path }).then(res => {
-                logger.info(`update invoice receipt: ${fileInfo.path}`);
-                console.log(`update invoice receipt: ${fileInfo.path}`);
-              }, err => {
-                logger.info(`update invoice error: ${JSON.stringify(err)}`);
-                console.log(`update invoice error: ${JSON.stringify(err)}`);
-              });
-              mail.paymentReceipt(user.email, user, fileInfo.path, fileInfo.filename, fileInfo.contentType).then(res => {
-                logger.info(`sent email receipt success`);
-              });
-            });
-            paymentConvergeLog.user_id = user.id;
-            paymentConvergeLog.payment_id = newPayment.id;
-            paymentConvergeLogsModel.query().insert(paymentConvergeLog).then();
-          }
-          // add avatax transaction
-          if (isSaveAvatax) {
-            const quantity = this._getQuantity(carts, paymentType, amountObj.nbr);
-            this.createTransactionAvatax(billingInfo, user, newPayment, quantity).then(res => {
-              logger.info(`isSaveAvatax payment: ${JSON.stringify(res)}`);
-            });
-          }
-          // save coupon
-          if (checkCouponObj.isValid) {
-            const pcuh = new PaymentCouponUserHistoryModel();
-            pcuh.payment_id = newPayment.id;
-            pcuh.user_id = user.id;
-            pcuh.coupon_id = checkCouponObj.couponDetail.id;
-            PaymentCouponUserHistoryModel.query().insert(pcuh).then(res => {
-              logger.info(`PaymentCouponUserHistoryModel insert: ${JSON.stringify(res)}`);
-            });
-          }
-
-        });
-      logger.info(JSON.stringify(scrappy));
-      return newPayment;
+      if (carts.length > 0) {
+        const cartIds = carts.map(cart => cart.id);
+        PaymentCartsModel.query().delete().whereIn("id", cartIds).then();
+        const updateJob = await Promise.all(carts.map(async (cart) => {
+          const jobService = new JobsService();
+          const detail = await this.findPaymentCartById(cart.id);
+          const job = await jobService.getJobById(detail.job_id);
+          const jobUpdate = this.buyJob(job, cart);
+          const updated = await JobsModel.query().updateAndFetchById(job.id, jobUpdate);
+          return updated;
+        }));
+        return updateJob;
+      }
+      return null;
     } catch (err) {
       throw new HttpException(err.status || 500, err.message);
     }
   }
 
-  public async paymentEmployerBuyMorePrivateJob(
-    user: UserModel, carts: any[], isSaveCard = 1,
-    couponCode: string, billingInfo: UserBillingInfoModel
-  ) {
+  public async paymentEmployerBuyMorePrivateJob(jobs: any[]) {
     try {
-      const isBuyMore = true;
-      const amountObj = await this.calcTotalAmountEmployer(carts, isBuyMore, null);
-      let newPayment;
-      // const paymentConvergeLog = await convergeService.payment(user.converge_ssl_token, amountObj.amount);
-      const {
-        paymentConvergeLog,
-        totalAmount,
-        tax,
-        resultTax,
-        isSaveAvatax,
-        checkCouponObj,
-        discountValue,
-        isSaveCoupon
-      } = await this._checkCouponAndTax(user, amountObj.amount, couponCode, billingInfo, PAYMENT_TYPE.BuyMorePrivate);
-      const scrappy = await transaction(PaymentConvergeLogsModel, PaymentsModel, JobsModel, UserModel, PaymentCouponUserHistoryModel,
-        async (paymentConvergeLogsModel, paymentsModel, jobsModel, userModel, paymentCouponUserHistoryModel) => {
-          // update job
-          if (carts.length > 0) {
-            const updateJob = await Promise.all(carts.map(async (cart) => {
-              let job = cart.job as JobsModel;
-              const currentPrivateAppicant = job.private_applicants ? job.private_applicants : 0;
-              await jobsModel.query().updateAndFetchById(job.id, { private_applicants: currentPrivateAppicant + cart.private_applicants });
-            }))
-          }
-          const paymentObj = this._createPaymentObj(paymentConvergeLog, isSaveCoupon, totalAmount, amountObj.amount, discountValue, checkCouponObj, tax, user)
-          paymentObj.payment_type = PAYMENT_TYPE.BuyMorePrivate;
-          paymentObj.products = this.genProductsEmployer(carts, PAYMENT_TYPE.BuyMorePrivate);
-          newPayment = await paymentsModel.query().insert(paymentObj);
-          logger.info(`add payment ${JSON.stringify(newPayment)}`);
-          if (isSaveCard) {
-            await userModel.query().updateAndFetchById(user.id, { converge_ssl_token: user.converge_ssl_token } as UserModel);
-          }
-          // create payment log
-          if (paymentConvergeLog) {
-            // send mail
-            this.exportPaymentReceiptPdf(user, newPayment, billingInfo).then(fileInfo => {
-              const mail = new MailUtils();
-              if (!fileInfo.path) { return; }
-              newPayment.invoice_receipt_url = fileInfo.path;
-              PaymentsModel.query().updateAndFetchById(newPayment.id, { invoice_receipt_url: fileInfo.path }).then(res => {
-                logger.info(`update invoice receipt: ${fileInfo.path}`);
-                console.log(`update invoice receipt: ${fileInfo.path}`);
-              }, err => {
-                logger.info(`update invoice error: ${JSON.stringify(err)}`);
-                console.log(`update invoice error: ${JSON.stringify(err)}`);
-              });
-              mail.paymentReceipt(user.email, user, fileInfo.path, fileInfo.filename, fileInfo.contentType).then(res => {
-                logger.info(`sent email receipt success`);
-              });
-            });
-            paymentConvergeLog.user_id = user.id;
-            paymentConvergeLog.payment_id = newPayment.id;
-            paymentConvergeLogsModel.query().insert(paymentConvergeLog).then();
-          }
-          // add avatax transaction
-          if (isSaveAvatax) {
-            const quantity = this._getQuantity(carts, PAYMENT_TYPE.BuyMorePrivate, amountObj.nbr);
-            this.createTransactionAvatax(billingInfo, user, newPayment, quantity).then(res => {
-              logger.info(`isSaveAvatax payment: ${JSON.stringify(res)}`);
-            });
-          }
-          if (checkCouponObj.isValid) {
-            const pcuh = new PaymentCouponUserHistoryModel();
-            pcuh.payment_id = newPayment.id;
-            pcuh.user_id = user.id;
-            pcuh.coupon_id = checkCouponObj.couponDetail.id;
-            PaymentCouponUserHistoryModel.query().insert(pcuh).then(res => {
-              logger.info(`PaymentCouponUserHistoryModel insert: ${JSON.stringify(res)}`);
-            });;
-          }
-
-        });
-      logger.info(JSON.stringify(scrappy));
-      return newPayment;
+      if (jobs.length > 0) {
+        const jobService = new JobsService();
+        const updateJob = await Promise.all(jobs.map(async (job) => {
+          const currentJob = await jobService.getJobById(job.id);
+          await JobsModel.query().updateAndFetchById(job.id, { private_applicants: currentJob.private_applicants + job.private_applicants });
+        }));
+        return updateJob;
+      }
+      return null;
     } catch (err) {
       throw new HttpException(err.status || 500, err.message);
     }
@@ -481,9 +324,7 @@ export default class PaymentsService {
                 logger.info(`update invoice error: ${JSON.stringify(err)}`);
                 console.log(`update invoice error: ${JSON.stringify(err)}`);
               });
-              mail.paymentReceipt(user.email, user, fileInfo.path, fileInfo.filename, fileInfo.contentType).then(res => {
-                logger.info(`sent email receipt success`);
-              });
+            
             });
             paymentConvergeLog.user_id = user.id;
             paymentConvergeLog.payment_id = newPayment.id;
@@ -548,112 +389,11 @@ export default class PaymentsService {
     return 0;
   }
 
-  public async paymentEmployerUpgradeJob(
-    user: UserModel, jobParam: JobsModel, isSaveCard = 1, currentJob: JobsModel,
-    couponCode: string, billingInfo: UserBillingInfoModel) {
+  public async paymentEmployerUpgradeJob(user: UserModel, jobParam: JobsModel, currentJob: JobsModel) {
     try {
-      const billingSettingsService = new BillingSettingsService();
-      const setting = await billingSettingsService.getSystemSettingsForEmployer();
-      const priceObj = this.calcTotalDayCart(jobParam, setting);
-      if (currentJob.add_urgent_hiring_badge == 0 && jobParam.expired_days) priceObj.total_urgent_price = priceObj.total_urgent_price * 2;
-      if (jobParam.is_make_featured == 1 && jobParam.featured_start_date && jobParam.featured_end_date) {
-        const subDays = this.checkIncludeFeatureDateJob(currentJob, jobParam.featured_start_date, jobParam.featured_end_date);
-        if (subDays == -1) priceObj.total_featured_price = 0;
-        else priceObj.total_featured_price = priceObj.total_featured_price - subDays * setting.featured_price;
-      }
-      const total = priceObj.total_featured_price + priceObj.total_standard_price +
-        priceObj.total_urgent_price + priceObj.total_private_price;
-
-      Object.assign(jobParam, priceObj);
-      let newPayment;
-      const {
-        paymentConvergeLog,
-        totalAmount,
-        tax,
-        resultTax,
-        isSaveAvatax,
-        checkCouponObj,
-        discountValue,
-        isSaveCoupon
-      } = await this._checkCouponAndTax(user, total, couponCode, billingInfo, PAYMENT_TYPE.UpgradeJob);
-      const scrappy = await transaction(PaymentConvergeLogsModel, PaymentsModel, JobsModel, UserModel, PaymentCouponUserHistoryModel,
-        async (paymentConvergeLogsModel, paymentsModel, jobsModel, userModel, paymentCouponUserHistoryModel) => {
-          console.log(`Start Transaction.`);
-          logger.info(`Start Transaction.`);
-          console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-          logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-          // update job
-          const updateJob = await this._upgradeJob(jobParam, currentJob, jobsModel, priceObj);
-          const paymentObj = this._createPaymentObj(paymentConvergeLog, isSaveCoupon, totalAmount, total, discountValue, checkCouponObj, tax, user)
-          paymentObj.payment_type = PAYMENT_TYPE.UpgradeJob;
-          const carts = [{
-            job: updateJob
-          }];
-          paymentObj.products = this.genProductsEmployer(carts, PAYMENT_TYPE.UpgradeJob, 0, null);
-
-          const quantity = this._getQuantity(carts, PAYMENT_TYPE.UpgradeJob, 0);
-          newPayment = await paymentsModel.query().insert(paymentObj);
-          logger.info(`add payment upgrade job ${JSON.stringify(newPayment)}`);
-          if (isSaveCard) {
-            userModel.query().updateAndFetchById(user.id, { converge_ssl_token: user.converge_ssl_token } as UserModel).then();
-          }
-
-          if (paymentConvergeLog) {
-            // send mail
-            console.log("before export");
-            logger.info("before export");
-            console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-            logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-            this.exportPaymentReceiptPdf(user, newPayment, billingInfo, setting).then(fileInfo => {
-              const mail = new MailUtils();
-              console.log("done export");
-              logger.info("done export");
-              console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-              logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-              if (!fileInfo.path) { return; }
-              newPayment.invoice_receipt_url = fileInfo.path;
-              PaymentsModel.query().updateAndFetchById(newPayment.id, { invoice_receipt_url: fileInfo.path }).then(res => {
-                logger.info(`update invoice receipt: ${fileInfo.path}`);
-                console.log(`update invoice receipt: ${fileInfo.path}`);
-                console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-                logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-              }, err => {
-                logger.info(`update invoice error: ${JSON.stringify(err)}`);
-                console.log(`update invoice error: ${JSON.stringify(err)}`);
-                console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-                logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-              });
-              mail.paymentReceipt(user.email, user, fileInfo.path, fileInfo.filename, fileInfo.contentType).then(res => {
-                logger.info(`sent email receipt success`);
-                console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-                logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-              });
-            });
-            paymentConvergeLog.user_id = user.id;
-            paymentConvergeLog.payment_id = newPayment.id;
-            paymentConvergeLogsModel.query().insert(paymentConvergeLog).then();
-          }
-          // add avatax transaction
-          if (isSaveAvatax) {
-            this.createTransactionAvatax(billingInfo, user, newPayment, quantity).then(res => {
-              logger.info(`isSaveAvatax payment: ${JSON.stringify(res)}`);
-            });
-          }
-          // save coupon
-          if (checkCouponObj.isValid) {
-            const pcuh = new PaymentCouponUserHistoryModel();
-            pcuh.payment_id = newPayment.id;
-            pcuh.user_id = user.id;
-            pcuh.coupon_id = checkCouponObj.couponDetail.id;
-            PaymentCouponUserHistoryModel.query().insert(pcuh).then();
-          }
-        });
-      console.log("done update payment log");
-      logger.info("done update payment log");
-      console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      logger.info(JSON.stringify(scrappy));
-      return newPayment;
+       // update job
+       const updateJob = await this._upgradeJob(jobParam, currentJob);
+      return updateJob;
     } catch (err) {
       throw new HttpException(err.status || 500, err.message);
     }
@@ -1144,14 +884,11 @@ export default class PaymentsService {
       throw new HttpException(err.status || 500, err.message);
     }
   }
-  private async _upgradeJob(jobParams: JobsModel, currentJob: JobsModel, jobsModel, priceObj) {
+  private async _upgradeJob(jobParams: JobsModel, currentJob: JobsModel) {
     let jobUpdate = new JobsModel();
     const now = moment().utc();
     const currentExpiredDate = moment.utc(currentJob.expired_at);
     const expiredMoment = currentExpiredDate > now ? currentExpiredDate : now;
-    // jobUpdate.expired_at = expiredMoment.add(jobParams.expired_days, "d").format("YYYY-MM-DD HH:mm:ss");
-    // process When Expired Day Is 1
-    // get expired_at from client to update.
     let dateExpired;
     if (!jobParams.expired_days) {
       dateExpired = currentExpiredDate;
@@ -1163,9 +900,8 @@ export default class PaymentsService {
     if (jobParams.add_urgent_hiring_badge) {
       jobUpdate.add_urgent_hiring_badge = jobParams.add_urgent_hiring_badge;
       jobUpdate.expired_urgent_hiring_badge_at = jobUpdate.expired_at;
-    } else {
-      jobUpdate.add_urgent_hiring_badge = 0
-    }
+    } 
+    
     if (jobParams.featured_start_date && jobParams.featured_end_date) {
       if (!currentJob.featured_start_date || currentJob.featured_start_date.length == 0) {
         // job cu ko co featured
@@ -1181,15 +917,10 @@ export default class PaymentsService {
 
     jobUpdate.paid_at = now.format("YYYY-MM-DD HH:mm:ss");
     jobUpdate.status = JOB_STATUS.Active;
-    await jobsModel.query().updateAndFetchById(currentJob.id, jobUpdate);
-    jobUpdate.id = currentJob.id;
-    jobUpdate.title = currentJob.title;
-    jobUpdate.is_private = 0;
-    jobUpdate.total_featured_price = priceObj.total_featured_price;
-    jobUpdate.total_standard_price = priceObj.total_standard_price;
-    jobUpdate.total_urgent_price = priceObj.total_urgent_price;
-    return jobUpdate;
+    const updatedJob = await JobsModel.query().updateAndFetchById(currentJob.id, jobUpdate);
+    return updatedJob;
   }
+  
   public async exportPaymentReceiptPdf(user: UserModel, payment: PaymentsModel, billingInfo: UserBillingInfoModel, setting: BillingSettingEmployerModel = null) {
     let filePath = null;
     const now = moment().utc().format("MM-DD-YYYY");

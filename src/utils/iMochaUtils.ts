@@ -10,9 +10,9 @@ export default class IMochaUtils {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: config.IMOCHA_API_URL,
+      baseURL: 'config.IMOCHA_API_URL',
       timeout: 20000,
-      headers: { "x-api-key": `${config.IMOCHA_API_KEY}` }
+      headers: { "x-api-key": `{config.IMOCHA_API_KEY}` }
     });
     this.instance.interceptors.response.use((response: any) => {
       // Any status code that lie within the range of 2xx cause this function to trigger

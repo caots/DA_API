@@ -9,9 +9,7 @@ import { UserResponsivesModel } from "@src/models/user_password_reset";
 import BillingSettingsService from "@src/services/billingSettingsService";
 import NotificationService from "@src/services/notification";
 import PaymentsService from "@src/services/paymentService";
-import TaskScheduleService from "@src/services/TaskScheduleService";
 import UserService from "@src/services/user";
-import UserPotentialsService from "@src/services/userPotentialsService";
 import UserSessionBll from "@src/services/userSession";
 import ImageUtils from "@src/utils/image";
 import PhoneNumberUtils from "@src/utils/phoneNumber";
@@ -88,54 +86,7 @@ export default class UserController {
       next(err);
     }
   }
-  // test crawl
-  public async testCrawlerUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const name = get(req, "query.name", '');
-      const salary = get(req, "query.salary", '');
-      const multi_location = get(req, "query.multi_location", '');
-      const range = get(req, "query.range", '');
-      const employee = get(req, "query.employee", '');
-      const fromage = get(req, "query.fromage", '');
-
-      const configParams =  [
-        { name: 'name', value: name },
-        { name: 'salary', value: salary },
-        { name: 'multi_location', value: multi_location},
-        { name: 'range', value: range},
-        { name: 'url', value: 'https://indeed.com/jobs'},
-        { name: 'drivertype', value: 'indeed_jobs'},
-        { name: 'employee', value: employee},
-        { name: 'fromage', value: fromage}
-      ]
-      const taskScheduleService = new TaskScheduleService();
-      const result = await taskScheduleService.saveUrlJobLocalCrawl(configParams);
-      return ok(result, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async testCrawlerJob(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const taskScheduleService = new TaskScheduleService();
-      const result = await taskScheduleService.getAllJobInfoCrawl();
-      return ok(result, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  public async testCrawlerJobByUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const urlJob = get(req, "query.url", '');
-      const taskScheduleService = new TaskScheduleService();
-      const result = await taskScheduleService.getDetailsJobInfoByUrlCrawl(urlJob);
-      if (!result) return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      return ok({ file: result }, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
+ 
   // =========================
   public async get(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -150,14 +101,6 @@ export default class UserController {
         return unAuthorize({}, req, res);
       }
       const paymentService = new PaymentsService();
-      const userPotentialsService = new UserPotentialsService();
-      const userPotentials = await userPotentialsService.findByEmailSafe(userInfo.email);
-      if (userPotentials) {
-        const listUserPotentialsCategory: any = await userPotentialsService.findListCategory(userPotentials.id);
-        userInfo["user_potentials_categories"] = listUserPotentialsCategory;
-        userInfo["is_user_potentials"] = true;
-      }
-
       if (userInfo.acc_type == ACCOUNT_TYPE.Employer && userInfo.employer_id != 0) {
         const userResponse = new UserModel();
         userResponse.id = userInfo.id;
@@ -242,20 +185,6 @@ export default class UserController {
             body.nbr_free_credits = employerSettings.free_direct_message;
           }
         };
-      }
-
-      if (isCheckUSerPotentials && isCheckUSerPotentials != '0') {
-        const userPotentialsService = new UserPotentialsService();
-        let listCategory = [];
-        if (categoryUserPotentials) listCategory = JSON.parse("[" + categoryUserPotentials + "]");
-        const firstName = body.first_name;
-        const lastName = body.last_name;
-        let userPotentials = await userPotentialsService.findByEmailSafe(emailUser);
-        if (!userPotentials) { return badRequest({ message: USER_MESSAGE.emailNotExists }, req, res); }
-        userPotentials.first_name = firstName;
-        userPotentials.last_name = lastName;
-        await userPotentialsService.updateUserPotentialsCompleteInfo(userPotentials);
-        await userPotentialsService.updateUserPotentialsCategory(userPotentials, listCategory);
       }
       const update = await userService.update(currentUser.id, body);
       if (update) {

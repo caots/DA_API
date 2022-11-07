@@ -209,9 +209,7 @@ export default class FindCandidatesController {
         billingInfo = await msValidate.validateCreateBilling(billingAddressBody) as UserBillingInfoModel;
       }
 
-      const results = await paymentsService.paymentEmployer(user, [], isSaveCard,
-        paymentType, numCredit, jobseekerInfo, coupon, billingInfo
-      );
+      const results = await paymentsService.paymentEmployer(user, [],jobseekerInfo);
       const chatOwnerId = user.employer_id ? user.onwer_id : user.id;
       if (paymentType == PAYMENT_TYPE.DirectMesssage) {
         if (!potential) {

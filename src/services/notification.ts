@@ -1,12 +1,11 @@
 import { EMIT_EVENT, ZOOM_NAME } from "@src/chatModule/lib/config";
-import { GA_EVENT_ACTION, GA_EVENT_CATEGORY, NOTIFICATION_TYPE, TASKSCHEDULE_STATUS, TASKSCHEDULE_TYPE } from "@src/config";
+import { TASKSCHEDULE_STATUS, TASKSCHEDULE_TYPE } from "@src/config";
 import JobsModel from "@src/models/jobs";
 import TaskScheduleModel from "@src/models/task_schedule";
 import UserModel from "@src/models/user";
 import UserNotificationModel from "@src/models/user_notifications";
 import { NotificationRepository } from "@src/repositories/notificationRepository";
 import { TaskScheduleRepository } from "@src/repositories/taskScheduleRepository";
-import AnalyticUtils from "@src/utils/analyticUtils";
 import { Server } from "socket.io";
 
 export default class NotificationService {
@@ -50,17 +49,6 @@ export default class NotificationService {
       let results = await UserNotificationModel.query().where({ user_id: userId, is_read: 0 }).whereIn('id', ids).where(function () { this.where({ is_read: 0 }).orWhere({ is_read: null }) });
       if (results.length > 0) {
         await UserNotificationModel.query().update({ is_read: 1 }).where({ user_id: userId }).whereIn('id', ids)
-        const events = results.filter(e => [NOTIFICATION_TYPE.JobseekerIsInvited, NOTIFICATION_TYPE.NewPostsJobseekers, NOTIFICATION_TYPE.ReminderSavedJobExpire, NOTIFICATION_TYPE.ReminderCompleteApplication,]
-          .includes(e.type)).map(e => ({
-            category: GA_EVENT_CATEGORY.NOTIFICATION,
-            action: e.type == NOTIFICATION_TYPE.JobseekerIsInvited ? GA_EVENT_ACTION.NOTIFICATION_READ_FIND_CANDIDATES :
-              e.type == NOTIFICATION_TYPE.NewPostsJobseekers ? GA_EVENT_ACTION.NOTIFICATION_READ_NEW_JOB :
-                e.type == NOTIFICATION_TYPE.ReminderSavedJobExpire ? GA_EVENT_ACTION.NOTIFICATION_READ_REMINDER_JOB_EXPIRE :
-                  GA_EVENT_ACTION.NOTIFICATION_READ_REMINDER_COMPLETE_APPLICATION,
-            label: 'user_id-notication_id',
-            value: `${userId}-${e.id}`
-          }));
-        events.length > 0 && AnalyticUtils.logEvents(events);
         resolve(ids.length == 1 ? results[0] : ids.length > 1 ? results : null);
       }
       else {

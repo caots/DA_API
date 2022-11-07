@@ -1,4 +1,3 @@
-import config from "@src/config";
 import { COMMON_ERROR } from "@src/config/message";
 import { logger } from "@src/middleware";
 import HttpException from "@src/middleware/exceptions/httpException";
@@ -10,17 +9,17 @@ export default class ConvergeUtils {
   private instance: AxiosInstance;
   private defaultObject = {
     txn: {
-      ssl_vendor_id: config.CONVERGE_SSL_VENDOR_ID,
-      ssl_merchant_id: config.CONVERGE_MERCHANT_ID,
-      ssl_user_id: config.CONVERGE_USER_ID,
-      ssl_pin: config.CONVERGE_PIN,
+      ssl_vendor_id: 'config.CONVERGE_SSL_VENDOR_ID',
+      ssl_merchant_id: 'config.CONVERGE_MERCHANT_ID',
+      ssl_user_id:' config.CONVERGE_USER_ID',
+      ssl_pin: 'config.CONVERGE_PIN',
     }
   }
   opxml2js = { ignoreComment: true, alwaysChildren: true, compact: true };
   opjs2xml = { ignoreAttributes: true, compact: true, ignoreComment: true, spaces: 0 };
   constructor() {
     this.instance = axios.create({
-      baseURL: config.CONVERGE_API_URL,
+      baseURL: 'config.CONVERGE_API_URL',
       timeout: 20000,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       // headers: { 'Content-Type': 'xml' }
@@ -94,17 +93,17 @@ export default class ConvergeUtils {
   }
   public async getTransactionToken(obj): Promise<any> {
     try {
-      obj = Object.assign(
-        {ssl_vendor_id: config.CONVERGE_SSL_VENDOR_ID,
-        ssl_merchant_id: config.CONVERGE_MERCHANT_ID,
-        ssl_user_id: config.CONVERGE_USER_ID,
-        ssl_pin: config.CONVERGE_PIN}, obj)
-        console.log('getTransactionToken');
-        console.log(obj);
-      const url = `${config.CONVERGE_HOST_PAYMENT}/transaction_token?${this._convertObjectToQuery(obj)}`;
-      let results = await axios.post(url, null) as any;
-      console.log(results.data);
-      return results.data;
+      // obj = Object.assign(
+      //   {ssl_vendor_id: config.CONVERGE_SSL_VENDOR_ID,
+      //   ssl_merchant_id: config.CONVERGE_MERCHANT_ID,
+      //   ssl_user_id: config.CONVERGE_USER_ID,
+      //   ssl_pin: config.CONVERGE_PIN}, obj)
+      //   console.log('getTransactionToken');
+      //   console.log(obj);
+      // const url = `${config.CONVERGE_HOST_PAYMENT}/transaction_token?${this._convertObjectToQuery(obj)}`;
+      // let results = await axios.post(url, null) as any;
+      // console.log(results.data);
+      // return results.data;
     } catch (err) {
       console.log(`getTransactionToken error ${JSON.stringify(err)}`);
       // throw err;

@@ -1,7 +1,6 @@
 import { ACCOUNT_TYPE, PERMISSION_EMPLOYER } from '@src/config';
 import AuthController from "@src/controllers/auth";
 import FindCandidatesController from '@src/controllers/findCandidates';
-import { verifiedRC } from "@src/middleware";
 import { checkRole, permissionsEmp } from '@src/middleware/roles';
 import { Router } from "express";
 export class FindCandidatesRouter {
@@ -27,7 +26,7 @@ export class FindCandidatesRouter {
       permissionsEmp(PERMISSION_EMPLOYER.FindCandidate), this.findCandidatesController.getAssessments);
     this.router.post("/bookmark/:id", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
       permissionsEmp(PERMISSION_EMPLOYER.FindCandidate), this.findCandidatesController.bookmarkJobApplicant);
-    this.router.post("/payment", verifiedRC, this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
+    this.router.post("/payment", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
       permissionsEmp(PERMISSION_EMPLOYER.FindCandidate), this.findCandidatesController.paymentCandidateForEmployer);
     this.router.post("/createGroupChat", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.Employer),
       permissionsEmp(PERMISSION_EMPLOYER.FindCandidate), this.findCandidatesController.createGroupChat);

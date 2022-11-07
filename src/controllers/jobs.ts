@@ -1,4 +1,4 @@
-import { ACCOUNT_TYPE, JOB_STATUS, PAGE_SIZE, SEARCH_JOB_TYPE, TASKSCHEDULE_TYPE } from "@src/config";
+import { ACCOUNT_TYPE, JOB_STATUS, PAGE_SIZE, SEARCH_JOB_TYPE } from "@src/config";
 import { COMMON_ERROR, COMMON_SUCCESS, JOB_MESSAGE, USER_MESSAGE } from "@src/config/message";
 import { logger } from "@src/middleware";
 import { badRequest, forbidden, ok } from "@src/middleware/response";
@@ -9,7 +9,6 @@ import JobBookmarksModel from "@src/models/job_bookmarks";
 import JobCateforiesModel from "@src/models/job_categories";
 import UserModel from "@src/models/user";
 import JobsService from "@src/services/jobsService";
-import TaskScheduleService from "@src/services/TaskScheduleService";
 import MsValidate from "@src/utils/validate";
 import { NextFunction, Request, Response } from "express";
 import { get, set } from "lodash";
@@ -290,17 +289,9 @@ export default class JobsController {
       const location = req.param("location");
       const orderNo = parseInt(req.param("orderNo", 0));
       const searchType = req.param("searchType");
+      const category = req.param("category");
       const jobType = req.param("jobType", "").split(",");
       const q = req.param("q");
-      let assessments = [];
-      try {
-        if (req.param("assessments")) {
-          assessments = JSON.parse(req.param("assessments"));
-        }
-      } catch (e) {
-        console.log(e);
-        logger.error(e);
-      }
       const jobService = new JobsService();
       const jobsPagesModel = await jobService.getJobsByEmployer(
         user.id,
@@ -309,7 +300,7 @@ export default class JobsController {
         createDateTo,
         location,
         q,
-        assessments,
+        category,
         orderNo,
         page, pageSize, jobType
       );
@@ -355,7 +346,7 @@ export default class JobsController {
       const salaryTo = parseFloat(req.param("salaryTo"));
       const city = req.param("city");
       const state = req.param("state");
-      const orderNo = parseInt(req.param("orderNo", 6));
+      const orderNo = parseInt(req.param("orderNo", 8));
       const employerId = parseInt(req.param("employerId", 0));
       const userId = parseInt(req.param("userId", 0));
       const travel = req.param("travel");
@@ -515,8 +506,6 @@ export default class JobsController {
         newBookmark.job_id = jobId;
         newBookmark.job_seeker_id = user.id;
         const newReport = await jobService.bookmark(newBookmark, type);
-
-        new TaskScheduleService().deleteWhere({ 'type': TASKSCHEDULE_TYPE.ReminderSavedJobExpire, 'user_id': user.id, 'subject_id': currentJob.id }).then();
 
         return ok({ message: "sucess" }, req, res);
       }

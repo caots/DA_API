@@ -6,39 +6,22 @@ if (!envFound) throw new Error("Couldn't find .env file");
 
 export default {
   port: process.env.APP_PORT,
-  portSchedule: process.env.APP_PORT_SCHEDULE || '2021',
 
   logs: { level: process.env.LOG_LEVEL || "silly" },
 
   DB_ADMIN_USERNAME: process.env.DB_ADMIN_USERNAME,
-  CRAWLER_AWS_API: process.env.CRAWLER_AWS_API,
-
   DB_ADMIN_PASSWORD: process.env.DB_ADMIN_PASSWORD,
 
   DB_HOST_NAME: process.env.DB_HOST_NAME,
-
   DB_PORT: process.env.DB_PORT,
-
   DB_NAME: process.env.DB_NAME,
 
   DATABASE_POOL_MIN: process.env.DATABASE_POOL_MIN,
-
   DATABASE_POOL_MAX: process.env.DATABASE_POOL_MAX,
-
   DATABASE_POOL_IDLE: process.env.DATABASE_POOL_IDLE,
 
-  RC_SITE_KEY: process.env.RC_SITE_KEY,
-
-  RC_SECRET_KEY: process.env.RC_SECRET_KEY,
-
-  RC_MIN_SCORE: process.env.RC_MIN_SCORE,
-
-  pHSM_URL: process.env.pHSM_URL,
-
   JWT_SECRET: process.env.JWT_SECRET,
-
   JWT_SECRET_REFRESH: process.env.JWT_SECRET_REFRESH,
-
   JWT_SECRET_EXPIRES: process.env.JWT_SECRET_EXPIRES,
   JWT_SECRET_EXPIRES_NO_REMEMBER_ME: process.env.JWT_SECRET_EXPIRES_NO_REMEMBER_ME,
 
@@ -49,75 +32,23 @@ export default {
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
   MAIL_ENCRYPTION: process.env.MAIL_ENCRYPTION,
   MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
-  MAIL_FROM_ADDRESS: {
-    // SYSTEM: process.env.MAIL_FROM_ADDRESS_SYSTEM || 'system@measuredskills.com',
-    // JOB: process.env.MAIL_FROM_ADDRESS_JOB || 'job-alerts@measuredskills.com',
-    // BILLING: process.env.MAIL_FROM_ADDRESS_BILLING || 'billing@measuredskills.com',
-    // ALERT: process.env.MAIL_FROM_ADDRESS_ALERT || 'alerts@measuredskills.com',
-    SYSTEM: process.env.MAIL_FROM_ADDRESS_SYSTEM || 'ngoc.nguyenvan@powergatesoftware.com',
-    JOB: process.env.MAIL_FROM_ADDRESS_JOB || 'ngoc.nguyenvan@powergatesoftware.com',
-    BILLING: process.env.MAIL_FROM_ADDRESS_BILLING || 'ngoc.nguyenvan@powergatesoftware.com',
-    ALERT: process.env.MAIL_FROM_ADDRESS_ALERT || 'ngoc.nguyenvan@powergatesoftware.com',
-  },
+  MAIL_FROM_ADDRESS: process.env.MAIL_FROM_ADDRESS,
 
   WEBSITE_URL: process.env.WEBSITE_URL,
   ADMIN_URL: process.env.ADMIN_URL,
-  MAIL_SEND_GRID_API_KEY: process.env.MAIL_SEND_GRID_API_KEY,
-  MAIL_SEND_GRID_EMAIL_FROM: process.env.MAIL_SEND_GRID_EMAIL_FROM,
-
-  IMOCHA_API_URL: process.env.IMOCHA_API_URL,
-  IMOCHA_API_KEY: process.env.IMOCHA_API_KEY,
 
   API_URL: process.env.API_URL,
   API_BASE_URL: process.env.API_BASE_URL,
   NODE_ENV: process.env.NODE_ENV,
 
-  CONVERGE_SSL_VENDOR_ID: process.env.CONVERGE_SSL_VENDOR_ID,
-  CONVERGE_MERCHANT_ID: process.env.CONVERGE_MERCHANT_ID,
-  CONVERGE_USER_ID: process.env.CONVERGE_USER_ID,
-  CONVERGE_PIN: process.env.CONVERGE_PIN,
-  CONVERGE_API_URL: process.env.CONVERGE_API_URL,
-  CONVERGE_HOST_PAYMENT: process.env.CONVERGE_HOST_PAYMENT,
 
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
-
-  GA_API_SECRET: process.env.GA_API_SECRET || 'G-WDCECT02H3',
-  GA_MEASUREMENT_ID: process.env.GA_MEASUREMENT_ID || 'O3pEkBRoSHWiKFvrr2w5nQ',
 
   S3_ID: process.env.S3_ID,
   S3_SECRET: process.env.S3_SECRET,
   S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
   S3_URL: process.env.S3_URL,
-
-  TASKSCHEDULE: {
-    TIMER: {
-      REMOVE_AFTER: process.env.JOB_NOTIFY_TIMER_REMOVE_AFTER || '0 0 23 * * *', //trigger jobs when 23h every day
-      NEW_JOB_TO_FOLLOWER: process.env.JOB_NOTIFY_TIMER_NEW_JOB_TO_FOLLOWER || '*/5 * * * *', //5 minute trigger jobs
-      NEW_JOB_SUGGEST: process.env.NEW_JOB_SUGGEST || '0 0 10 * * *', //trigger jobs when 10h every day
-      NEW_JOB_USER_POTENTIAL: process.env.NEW_JOB_SUGGEST || '0 0 10 * * *', //trigger jobs when 10h every day
-      REMINDER_COMPLETE_APPLICATION: process.env.JOB_NOTIFY_TIMER_REMINDER_COMPLETE_APPLICATION || '*/5 * * * *', //5 minute trigger jobs
-      REMINDER_SAVED_JOB_EXPIRE: process.env.JOB_NOTIFY_TIMER_REMINDER_SAVED_JOB_EXPIRE || '*/15 * * * *', //15 minute trigger jobs
-      UNREAD_MESSAGES: process.env.UNREAD_MESSAGES || `{"type": "rule","hour": 1,"minute": 0,"second": 0,"tz": "Etc/UTC","dayOfWeek": 1}`, //trigger jobs when monday at 01:00:00
-    },
-    PARAMS: {
-      REMOVE_AFTER: process.env.JOB_NOTIFY_PARAMS_REMOVE_AFTER || 'day -30',
-      NEW_JOB_SUGGEST_MAXIMUM_MAIL_OF_DAY: process.env.NEW_JOB_SUGGEST_MAXIMUM_MAIL_OF_DAY || 3,
-    },
-    CRAWLER: {
-      CRAWLER_JOB_URL: process.env.CRAWLER_JOB_URL || '0 0 1 2 * *',
-      CRAWLER_JOB_DETAILS_INFO: process.env.CRAWLER_JOB_DETAILS_INFO || '0 0 13 2 * *',
-      CHECK_JOB_CRAWL_EXPIRED: process.env.CHECK_JOB_CRAWL_EXPIRED || '0 0 6 * * *', //trigger jobs when 6h every day
-    }
-  },
-
-  AVATAX_APP_NAME: process.env.AVATAX_APP_NAME,
-  AVATAX_APP_VERSION: process.env.AVATAX_APP_VERSION,
-  AVATAX_ENVIROMENT: process.env.AVATAX_ENVIROMENT,
-  AVATAX_MACHINE_NAME: process.env.AVATAX_MACHINE_NAME,
-  AVATAX_USERNAME: process.env.AVATAX_USERNAME,
-  AVATAX_PASSWORD: process.env.AVATAX_PASSWORD,
-  AVATAX_COMPANY_CODE: process.env.AVATAX_COMPANY_CODE || 'DEFAULT-2',
 
   CONTACT_EMAIL: process.env.CONTACT_EMAIL || 'infor@mywebsite.com',
   API_CALLBACK_IMOCHA_URL: process.env.API_CALLBACK_IMOCHA_URL

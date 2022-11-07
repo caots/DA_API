@@ -104,36 +104,11 @@ export default class JobsController {
 
   public async paymentForEmployer(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      delete req.body["g-recaptcha-response"];
       const user = req["currentUser"] as UserModel;
       const paymentsService = new PaymentsService();
       const carts = req.body.carts as any[];
-      const sslToken = get(req, "body.ssl_token", "");
-      const isSaveCard = get(req, "body.isSaveCard", 1);
       if (carts.length == 0) { return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res); }
-      if (sslToken) {
-        user.converge_ssl_token = sslToken;
-      }
-      const coupon = get(req, "body.coupon", "");
-      const msValidate = new MsValidate();
-      const notPayment = get(req, "body.notPayment", 0);
-      let billingInfo;
-      if (!notPayment) {
-        const billingAddressBody = {
-          address_line_1: req.body.address_line_1,
-          address_line_2: req.body.address_line_2,
-          city_name: req.body.city_name,
-          state_name: req.body.state_name,
-          zip_code: req.body.zip_code,
-          first_name: req.body.first_name,
-          last_name: req.body.last_name,
-          company_name: req.body.company_name
-        };
-        billingInfo = await msValidate.validateCreateBilling(billingAddressBody) as UserBillingInfoModel;
-      }
-      const results = await paymentsService.paymentEmployer(user, carts, isSaveCard,
-        null, 0, null, coupon, billingInfo
-      );
+      const results = await paymentsService.paymentEmployer(user, carts);
       return ok(results, req, res);
     } catch (err) {
       next(err);
@@ -145,31 +120,9 @@ export default class JobsController {
       const user = req["currentUser"] as UserModel;
       const paymentsService = new PaymentsService();
       const jobs = req.body.jobs as any[];
-      const sslToken = get(req, "body.ssl_token", "");
-      const isSaveCard = get(req, "body.isSaveCard", 1);
       
       if (jobs.length == 0) { return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res); }
-      if (sslToken) {
-        user.converge_ssl_token = sslToken;
-      }
-      const coupon = get(req, "body.coupon", "");
-      const msValidate = new MsValidate();
-      const notPayment = get(req, "body.notPayment", 0);
-      let billingInfo;
-      if (!notPayment) {
-        const billingAddressBody = {
-          address_line_1: req.body.address_line_1,
-          address_line_2: req.body.address_line_2,
-          city_name: req.body.city_name,
-          state_name: req.body.state_name,
-          zip_code: req.body.zip_code,
-          first_name: req.body.first_name,
-          last_name: req.body.last_name,
-          company_name: req.body.company_name
-        };
-        billingInfo = await msValidate.validateCreateBilling(billingAddressBody) as UserBillingInfoModel;
-      }
-      const results = await paymentsService.paymentEmployerBuyMorePrivateJob(user, jobs, isSaveCard, coupon, billingInfo);
+      const results = await paymentsService.paymentEmployerBuyMorePrivateJob(jobs);
       return ok(results, req, res);
     } catch (err) {
       next(err);
@@ -181,36 +134,13 @@ export default class JobsController {
       const user = req["currentUser"] as UserModel;
       const jobService = new JobsService();
       const paymentsService = new PaymentsService();
-      const billingSettingsService = new BillingSettingsService();
-      const sslToken = get(req, "body.ssl_token", "");
-      const isSaveCard = get(req, "body.isSaveCard", 1);
       const jobs = req.body.jobs as JobsModel[];
       if (jobs.length == 0) { return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res); }
-      if (sslToken) {
-        user.converge_ssl_token = sslToken;
-      }
       console.log(`Start paymentForUpgradeJob controller.`);
       logger.info(`Start paymentForUpgradeJob controller.`);
       console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
       logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      const coupon = get(req, "body.coupon", "");
       const msValidate = new MsValidate();
-      const notPayment = get(req, "body.notPayment", 0);
-      let billingInfo;
-      if (!notPayment) {
-        const billingAddressBody = {
-          address_line_1: req.body.address_line_1,
-          address_line_2: req.body.address_line_2,
-          city_name: req.body.city_name,
-          state_name: req.body.state_name,
-          zip_code: req.body.zip_code,
-          first_name: req.body.first_name,
-          last_name: req.body.last_name,
-          company_name: req.body.company_name
-        };
-        billingInfo = await msValidate.validateCreateBilling(billingAddressBody) as UserBillingInfoModel;
-      }
-
       const currentJob = await jobService.getJobByIdEmployerId(jobs[0].id, user.id);
       if (!currentJob) { return badRequest({ message: JOB_MESSAGE.jobNotExists }, req, res); }
       const expiredJob = moment.utc(currentJob.expired_at);
@@ -223,7 +153,7 @@ export default class JobsController {
       logger.info(`Start Service Payment.`);
       console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
       logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      const results = await paymentsService.paymentEmployerUpgradeJob(user, jobParams, isSaveCard, currentJob, coupon, billingInfo);
+      const results = await paymentsService.paymentEmployerUpgradeJob(user, jobParams, currentJob);
       return ok(results, req, res);
     } catch (err) {
       next(err);

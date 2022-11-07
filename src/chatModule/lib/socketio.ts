@@ -6,20 +6,6 @@ import { EMIT_EVENT, ZOOM_NAME } from "./config";
 const socket = (server: any) => {
   const io = socketio(server);
   io.on("connection", (socket: socketio.Socket) => {
-    // const eventHandlers = [
-    //   // foo(app, socket),
-    //   // bar(app, socket)
-    // ];
-    // // Bind events to handlers
-    // eventHandlers.forEach(handler => {
-    //   handler.forEach(eventName => {
-    //     socket.on(eventName, handler[eventName]);
-    //   });
-    // });
-
-    // Keep track of the socket
-    // app.allSockets.push(socket);
-    // function listen message send from client and post message to all client
     socket.on("connected", (data: any) => {
     });
     const zoomService = new ZoomService(io, socket);

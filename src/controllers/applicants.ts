@@ -48,10 +48,6 @@ export default class ApplicantsController {
         if (jobSeekerAssessments.length > totalAssessmentValid) {
           return badRequest({ message: JOB_MESSAGE.scoreApplyJobUnavailable }, req, res);
         }
-        // ignore logi score apply
-        // if (total_point < WEIGHT_SCORE_APPLY) {
-        //   return badRequest({ message: JOB_MESSAGE.scoreApplyJobUnavailable }, req, res);
-        // }
       }
       const applicantBody = get(req, "body", {}) as JobApplicantsModel;
       applicantBody.job_sekker_id = user.id;
@@ -84,7 +80,6 @@ export default class ApplicantsController {
       const employerInfo = await userSerive.getById(currentJob.employer_id);
       if (employerInfo && employerInfo.status == COMMON_STATUS.Active && employerInfo.is_deleted == 0 && employerInfo.is_user_deleted == 0) {
         const companyInfo = await userSerive.getCompanyById(employerInfo.company_id);
-        if(companyInfo) mailUtil.appliedJob(user.email, user, currentJob, companyInfo).then();
       }
       return ok({ message: COMMON_SUCCESS.applyJob }, req, res);
     } catch (err) {
@@ -113,9 +108,7 @@ export default class ApplicantsController {
        const currentJob = await jobService.getJobDetail(applicant.job_id, JOB_STATUS.Active);
        const companyInfo = await userSerive.getCompanyById(employerInfo.company_id);
        if(companyInfo) employerInfo['company_name'] = companyInfo.company_name;
-       if (employerInfo && currentJob) {
-        mailUtil.withdrawnJob(user.email, user, currentJob, employerInfo).then();
-       }
+       
       return ok({ message: COMMON_SUCCESS.drawJob }, req, res);
     } catch (err) {
       next(err);
