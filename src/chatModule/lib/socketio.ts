@@ -13,22 +13,11 @@ const socket = (server: any) => {
       if (!userId) {
         return;
       }
-      if (!socket.rooms[`${ZOOM_NAME.TakeAssessment}${userId}`]) {
-        console.log(`join ${ZOOM_NAME.TakeAssessment}${userId}`);
-        socket.join(`${ZOOM_NAME.TakeAssessment}${userId}`);
-      }
       if (!socket.rooms[`${ZOOM_NAME.InviteJoinZoom}${userId}`]) {
         console.log(`join ${ZOOM_NAME.InviteJoinZoom}${userId}`);
         socket.join(`${ZOOM_NAME.InviteJoinZoom}${userId}`);
       }
-      if (!socket.rooms[`${ZOOM_NAME.Notification}${userId}`]) {
-        console.log(`join ${ZOOM_NAME.Notification}${userId}`);
-        socket.join(`${ZOOM_NAME.Notification}${userId}`);
-      }
       zoomService.joinAllGroup(userId);
-    });
-    socket.on(EMIT_EVENT.AdminJoinAllZoom, () => {
-      zoomService.joinAllGroup(0, true);
     });
     socket.on(EMIT_EVENT.JoinZoom, (id) => {
       if (!id) { return; }
