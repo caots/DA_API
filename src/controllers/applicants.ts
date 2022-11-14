@@ -1,10 +1,9 @@
 import { EMIT_EVENT, ZOOM_NAME } from "@src/chatModule/lib/config";
-import { APPLICANT_STAGE, COMMON_STATUS, JOBSEEKER_RATTING_TYPE, JOB_SEEKER_ASSESSMENT_STATUS, JOB_STATUS, TASKSCHEDULE_TYPE } from "@src/config";
+import { APPLICANT_STAGE, COMMON_STATUS, JOBSEEKER_RATTING_TYPE, JOB_SEEKER_ASSESSMENT_STATUS, JOB_STATUS } from "@src/config";
 import { COMMON_SUCCESS, JOB_MESSAGE } from "@src/config/message";
 import { badRequest, ok } from "@src/middleware/response";
 import { PotentialCandidatesModel } from "@src/models/find_candidate_logs";
 import JobApplicantsModel from "@src/models/job_applicants";
-import TaskScheduleModel from "@src/models/task_schedule";
 import UserModel from "@src/models/user";
 import FindCandidateService from "@src/services/findCandidateService";
 import JobsApplicantService from "@src/services/jobsApplicantService";
@@ -71,8 +70,6 @@ export default class ApplicantsController {
         io.to(zoomJobseeker).emit(event, dataEmit);
         io.to(zoomJobEmployer).emit(event, dataEmit);
       }
-
-      TaskScheduleModel.query().delete().where({ 'type': TASKSCHEDULE_TYPE.ReminderCompleteApplication, 'user_id': user.id, 'subject_id': currentJob.id }).then();
 
       // sendmail
       const mailUtil = new MailUtils();

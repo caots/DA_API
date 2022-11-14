@@ -25,11 +25,6 @@ export class ChatService {
       this.io.to(data.group_id).emit("received_message_to_client", data);
     });
   }
-  public onRequestUnmark() {
-    this.socket.on("request_unmark", data => {
-      this.io.to(data.group_id).emit("request_unmark_update", data);
-    });
-  }
   public onJoinGroup() {
     this.socket.on("join_group", data => {
       this.joinToGroup(data);

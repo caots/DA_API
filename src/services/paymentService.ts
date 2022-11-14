@@ -1,20 +1,16 @@
-import { ACCOUNT_TYPE, EXPORT_TYPE, JOB_STATUS, PAGE_SIZE, PAYMENT_AMOUNT_MIN, PAYMENT_TYPE, PAYMENT_TYPE_STR } from "@src/config";
-import { logger } from "@src/middleware";
+import { ACCOUNT_TYPE, EXPORT_TYPE, JOB_STATUS, PAGE_SIZE, PAYMENT_TYPE, PAYMENT_TYPE_STR } from "@src/config";
 import HttpException from "@src/middleware/exceptions/httpException";
 import BillingSettingEmployerModel from "@src/models/employer_billing_settings";
 import JobsModel from "@src/models/jobs";
-import PaymentCartsModel, { PaymentConvergeLogsModel, PaymentCouponsModel, PaymentCouponUserHistoryModel, PaymentsModel, UserBillingInfoModel } from "@src/models/payments";
+import PaymentCartsModel, { PaymentsModel, UserBillingInfoModel } from "@src/models/payments";
 import { IEmployerPaymentHistoryEntities, IJobDetailPaymentHistory, IJobSeekerPaymentHistoryEntities, IProductAssessmentEntities, IProductJobEntities, IProductJobseekerEntities } from "@src/models/payments/entities";
 import UserModel from "@src/models/user";
 import PaymentExportUtils from "@src/utils/paymentExportUtils";
 import ConvergeUtils from "@src/utils/paymetCorvegeUtils";
-import MailUtils from "@src/utils/sendMail";
 import Avatax from 'avatax';
 import moment from "moment";
-import { transaction } from "objection";
 import BillingSettingsService from "./billingSettingsService";
 import JobsService from "./jobsService";
-import PaymentCouponService from "./paymentCouponService";
 const avaConfig = {
   appName: 'config.AVATAX_APP_NAME',
   appVersion: 'config.AVATAX_APP_VERSION',
@@ -272,84 +268,6 @@ export default class PaymentsService {
         return updateJob;
       }
       return null;
-    } catch (err) {
-      throw new HttpException(err.status || 500, err.message);
-    }
-  }
-  public async paymentJobseeker(
-    user: UserModel, paymentType: number,
-    nbrRetake: number, assessment: any, isSaveCard = 1,
-    couponCode: string, billingInfo: UserBillingInfoModel) {
-    try {
-      const amountObj = await this.calcTotalAmountJobseeker(paymentType, nbrRetake);
-      let newPayment;
-      const {
-        paymentConvergeLog,
-        totalAmount,
-        tax,
-        resultTax,
-        isSaveAvatax,
-        checkCouponObj,
-        discountValue,
-        isSaveCoupon
-      } = await this._checkCouponAndTax(user, amountObj.amount, couponCode, billingInfo, paymentType);
-      const scrappy = await transaction(PaymentConvergeLogsModel, PaymentsModel, UserModel, PaymentCouponUserHistoryModel,
-        async (paymentConvergeLogsModel, paymentsModel, userModel, paymentCouponUserHistoryModel) => {
-          // create payment
-          const paymentObj = this._createPaymentObj(paymentConvergeLog, isSaveCoupon, totalAmount, amountObj.amount, discountValue, checkCouponObj, tax, user)
-          paymentObj.payment_type = paymentType;
-          paymentObj.products = this.genProductsJobseeker([assessment], paymentType, amountObj.nbr);
-          const quantity = this._getQuantity([assessment], paymentType, amountObj.nbr);
-          newPayment = await paymentsModel.query().insert(paymentObj);
-          logger.info(`add payment ${JSON.stringify(newPayment)}`);
-          const nbrCredit = user.nbr_credits ? user.nbr_credits + amountObj.nbr : amountObj.nbr;
-          const userUpdate = {
-            nbr_credits: nbrCredit
-          };
-          if (isSaveCard) {
-            Object.assign(userUpdate, { converge_ssl_token: user.converge_ssl_token });
-          }
-          await userModel.query().updateAndFetchById(user.id, userUpdate as UserModel);
-          // create payment log
-          if (paymentConvergeLog) {
-            // send mail
-            this.exportPaymentReceiptPdf(user, newPayment, billingInfo).then(fileInfo => {
-              const mail = new MailUtils();
-              if (!fileInfo.path) { return; }
-              newPayment.invoice_receipt_url = fileInfo.path;
-              PaymentsModel.query().updateAndFetchById(newPayment.id, { invoice_receipt_url: fileInfo.path }).then(res => {
-                logger.info(`update invoice receipt: ${fileInfo.path}`);
-                console.log(`update invoice receipt: ${fileInfo.path}`);
-              }, err => {
-                logger.info(`update invoice error: ${JSON.stringify(err)}`);
-                console.log(`update invoice error: ${JSON.stringify(err)}`);
-              });
-            
-            });
-            paymentConvergeLog.user_id = user.id;
-            paymentConvergeLog.payment_id = newPayment.id;
-            paymentConvergeLogsModel.query().insert(paymentConvergeLog).then();
-          }
-          // add avatax transaction
-          if (isSaveAvatax) {
-            this.createTransactionAvatax(billingInfo, user, newPayment, quantity).then(res => {
-              logger.info(`isSaveAvatax payment: ${JSON.stringify(res)}`);
-            });
-
-          }
-          // save coupon
-          if (checkCouponObj.isValid) {
-            const pcuh = new PaymentCouponUserHistoryModel();
-            pcuh.payment_id = newPayment.id;
-            pcuh.user_id = user.id;
-            pcuh.coupon_id = checkCouponObj.couponDetail.id;
-            PaymentCouponUserHistoryModel.query().insert(pcuh).then(res => {
-              logger.info(`PaymentCouponUserHistoryModel insert: ${JSON.stringify(res)}`);
-            });
-          }
-        });
-      logger.info(JSON.stringify(scrappy));
-      return newPayment;
     } catch (err) {
       throw new HttpException(err.status || 500, err.message);
     }
@@ -761,83 +679,7 @@ export default class PaymentsService {
       }
     }
   }
-  private async _checkCouponAndTax(user: UserModel, amount: number, couponCode: string,
-    billingInfo: UserBillingInfoModel, paymentType) {
-    const paymentCouponService = new PaymentCouponService();
-    const convergeService = new ConvergeUtils();
-    let discountValue = 0;
-    let isSaveCoupon = false;
-    let checkCouponObj: { isValid: boolean, couponDetail: PaymentCouponsModel };
-    // get discount value:
-    // console.log(`Start _checkCoupon.`);
-    logger.info(`Start _checkCoupon.`);
-    // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    if (couponCode && couponCode.length > 0) {
-      checkCouponObj = await paymentCouponService.checkCoupon(couponCode, user);
-      if (checkCouponObj.isValid) {
-        isSaveCoupon = true;
-        discountValue = await paymentCouponService.getDiscountValue(checkCouponObj.couponDetail, amount);
-      }
-    } else {
-      checkCouponObj = {
-        isValid: false,
-        couponDetail: {} as PaymentCouponsModel
-      };
-    }
-    // console.log(`End _checkCoupon.`);
-    logger.info(`End _checkCoupon.`);
-    // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    //
-    const grandTotal = amount - discountValue;
-    let tax = 0;
-    let resultTax;
-    let isSaveAvatax = false;
-    // get tax if grandTotal > Avatax min
-    // console.log(`Start _checkTax.`);
-    logger.info(`Start _checkTax.`);
-    // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    let paymentConvergeLog;
-    let totalAmount;
-    if (grandTotal > PAYMENT_AMOUNT_MIN.Avatax) {
-      resultTax = await this.getTax(billingInfo, user, amount, discountValue, paymentType);
-      // console.log(`End _checkTax.`);
-      logger.info(`End _checkTax.`);
-      // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      // console.log(`Start call payment.`);
-      logger.info(`Start call payment.`);
-      // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-      isSaveAvatax = true;
-      tax = resultTax.totalTax;
-      totalAmount = tax + grandTotal;
-      paymentConvergeLog = await convergeService.payment(user.converge_ssl_token, totalAmount);
-    } else {
-      totalAmount = 0;
-    }
-    // if (grandTotal > PAYMENT_AMOUNT_MIN.Converge) {
-    //   paymentConvergeLog = await convergeService.payment(user.converge_ssl_token, totalAmount);
-    // } else {
-    //   totalAmount = 0;
-    // }
-    // console.log(`end call payment.`);
-    logger.info(`end call payment.`);
-    // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    logger.info(moment().utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
-    return {
-      paymentConvergeLog,
-      totalAmount,
-      tax,
-      resultTax,
-      isSaveAvatax,
-      checkCouponObj,
-      discountValue,
-      isSaveCoupon
-    }
-  }
+
   private _createPaymentObj(paymentConvergeLog, isSaveCoupon, totalAmount, amount, discountValue, checkCouponObj, tax, user) {
     const paymentObj = new PaymentsModel();
     if (paymentConvergeLog && paymentConvergeLog.ssl_amount) {

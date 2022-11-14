@@ -1,9 +1,0 @@
-<%- include('./_header.ejs',{ recipientEmail, accountType, ACCOUNT_TYPE_CONST, urlUnsubcribe, websiteUrl, currentYear,
-  user }); -%>
-  <div style="padding: 30px 10px;">
-    <p style="font-family: 'Avenir-Roman', sans-serif;
-    line-height: 27px;
-    font-size: 18px;"><strong><%= userName %></strong> has joined MeasuredSkills based on your referral. You have earned 
-      <strong><%= nbrRetake %></strong> assessment retake credit(s). Thank you for recommending MeasuredSkills.</p>
-  </div>
-<%- include('./_footer.ejs', { recipientEmail, urlUnsubcribe, websiteUrl, currentYear, user}); -%>

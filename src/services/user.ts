@@ -1,18 +1,17 @@
-import { GROUP_NOMAL_TYPE, GROUP_TYPE } from "@src/chatModule/lib/config";
+import { GROUP_TYPE } from "@src/chatModule/lib/config";
 import { ChatGroupMembersModel, ChatGroupsModel } from "@src/chatModule/models";
 import { ZoomService } from "@src/chatModule/service/room";
-import { ACCOUNT_TYPE, ADMIN_PERMISSION, COMMON_STATUS, JOB_SEEKER_ASSESSMENT_STATUS, NOTIFICATION_TYPE, PAGE_SIZE, PERMISSION_EMPLOYER, USER_STATUS } from "@src/config";
+import { ACCOUNT_TYPE, ADMIN_PERMISSION, COMMON_STATUS, JOB_SEEKER_ASSESSMENT_STATUS, NOTIFICATION_TYPE, PAGE_SIZE, USER_STATUS } from "@src/config";
 import HttpException from "@src/middleware/exceptions/httpException";
 import logger from "@src/middleware/logger";
 import AdminModel from "@src/models/admin";
-import BlackListUserModel from "@src/models/blacklist";
 import CompanyModel from "@src/models/company";
 import CompanyReportsModel, { JobSeekerRattingsModel } from "@src/models/company_reports";
 import FindCandidateLogsModel from "@src/models/find_candidate_logs";
 import JobAssessmentsModel from "@src/models/job_assessments";
-import UserModel, { EmployerMemberPermissionsModel, UserStoryModel, UserSubcribesModel } from "@src/models/user";
+import UserModel, { UserSubcribesModel } from "@src/models/user";
 import UserNotificationModel from "@src/models/user_notifications";
-import { UserEmailChangesModel, UserRefersModel, UserResponsivesModel } from "@src/models/user_password_reset";
+import { UserEmailChangesModel, UserRefersModel } from "@src/models/user_password_reset";
 import UserSessionModel from "@src/models/user_session";
 import UserSurveysModel from "@src/models/user_surveys";
 import { UserRepository } from "@src/repositories/userRepository";
@@ -236,50 +235,6 @@ export default class UserBll {
     } catch (err) {
       throw new HttpException(401, err.message);
     }
-  }
-
-  async checkBackListUser(email: string = '', IP: string = ''): Promise<any> {
-    try {
-      if (email) {
-        let query = await BlackListUserModel.query().where("email", email);
-        if (query && query.length > 0) return false;
-      }
-      if (IP) {
-        let checkPass = true;
-        let blackList: any = await BlackListUserModel.query();
-        if (blackList.length > 0) {
-          blackList.map(bll => {
-            if (!bll.ip) return;
-            let dynamicIP = IP.substring(0, IP.lastIndexOf("."));
-            dynamicIP = IP.substring(0, dynamicIP.lastIndexOf(".")).concat('.*.*');
-            let index = dynamicIP.indexOf(bll?.ip);
-            if (index >= 0) checkPass = false;
-          });
-        }
-        return checkPass;
-      }
-      return true;
-    } catch (err) {
-      throw new HttpException(401, err.message);
-    }
-
-    // let checkPass = true;
-
-    // if (BLACK_LIST_EMAIL.length > 0) {
-    //   BLACK_LIST_EMAIL.map(blEmail => {
-    //     let index = email.indexOf(blEmail);
-    //     if (index >= 0) checkPass = false;
-    //   });
-    // }
-    // if (BLACK_LIST_IP.length > 0) {
-    //   BLACK_LIST_IP.map(blIP => {
-    //     let dynamicIP = IP.substring(0, IP.lastIndexOf("."));
-    //     dynamicIP = IP.substring(0, dynamicIP.lastIndexOf(".")).concat('.*.*');
-    //     let index = dynamicIP.indexOf(blIP);
-    //     if (index >= 0) checkPass = false;
-    //   });
-    // }
-    // return checkPass;
   }
 
   public async update(id: number, userUpdate: UserModel): Promise<UserModel> {
@@ -649,59 +604,7 @@ export default class UserBll {
       throw new HttpException(401, err.message);
     }
   }
-
-  public async reassignMemberEmployer(delegateUser: UserModel): Promise<any> {
-    try {
-      const userPrimaryId = delegateUser.employer_id;
-      // Update Delegate User to Primary User
-      delegateUser.employer_id = 0;
-      await UserModel.query().updateAndFetchById(delegateUser.id, delegateUser);
-
-      const listPermissionMember = await EmployerMemberPermissionsModel.query().where("employer_member_id", delegateUser.id);
-      if(listPermissionMember && listPermissionMember.length > 0){
-        await Promise.all(
-          listPermissionMember.map(async (permissionMember: EmployerMemberPermissionsModel) => {
-            await EmployerMemberPermissionsModel.query().deleteById(permissionMember.id);
-          })
-        )
-      }
-
-      // update other Delegate Account
-      const listDelegates = await UserModel.query().where("employer_id", userPrimaryId);
-      if(listDelegates && listDelegates.length > 0){
-        await Promise.all(
-          listDelegates.map(async (delegate: UserModel) => {
-            delegate.employer_id = delegateUser.id;
-            await UserModel.query().updateAndFetchById(delegate.id, delegate);
-          })
-        )
-      }
-      // update User Primary to Delegate Account
-      const oldUserPrimary = await this.findById(userPrimaryId);
-      oldUserPrimary.employer_id = delegateUser.id;
-      await UserModel.query().updateAndFetchById(oldUserPrimary.id, oldUserPrimary);
-      const permissions = [1,2,3,4,5];
-      await Promise.all(
-        permissions.map(async (pm: number) => {
-          const newPermissionEmployer = {
-            employer_member_id: oldUserPrimary.id,
-            employer_permission_id: pm,
-            employer_id: delegateUser.id
-          }
-          await EmployerMemberPermissionsModel.query().insert(newPermissionEmployer);
-        })
-      );
-      
-      // update employerId company
-      const company = await this.getCompanyById(delegateUser.company_id);
-      company.employer_id = delegateUser.id;
-      await CompanyModel.query().updateAndFetchById(company.id, company);
-      return delegateUser;
-    } catch (err) {
-      throw new HttpException(401, err.message);
-    }
-  }
-
+  
   public async changeEmailSuccess(uecId: number, userId: number, userUpdate: UserModel): Promise<any> {
     try {
       const uecModel = new UserEmailChangesModel();
@@ -805,133 +708,6 @@ export default class UserBll {
   }
   // end gen refer
 
-  /*============== start employer member ===============*/
-  public async createEmployerMember(employerId: number, user: UserModel, permissions: number[], oldUserId = -1): Promise<UserModel> {
-    try {
-      let newUser;
-      const scrappy = await transaction(UserModel, EmployerMemberPermissionsModel,
-        async (userModel, employerMemberPermissionsModel) => {
-          if (oldUserId > 0) {
-            const query = userModel.query().delete().where({ id: oldUserId });
-            let results = await query.execute();
-            let query1 = employerMemberPermissionsModel.query().delete().where({ employer_member_id: oldUserId })
-            let results1 = await query1.execute();
-          }
-          const hash = bcrypt.hashSync(user.password, 10);
-          const verifiedToken = bcrypt.hashSync(`${user.email}${Date.now()}`, 10);
-          user.password = hash;
-          user.verified_token = verifiedToken;
-          newUser = await userModel.query().insert(user);
-          const empm = new EmployerMemberPermissionsModel();
-          empm.employer_member_id = newUser.id;
-          empm.employer_id = employerId;
-          const query = await Promise.all(
-            permissions.map(async (id: number) => {
-              empm.employer_permission_id = id;
-              return employerMemberPermissionsModel.query().insert(empm);
-            }));
-        });
-      logger.info("create createEmployerMember");
-      logger.info(JSON.stringify(scrappy));
-      return newUser;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  public async updateEmployerMember(employerId: number, memberId: number, user: UserModel, permissions: number[]): Promise<any> {
-    try {
-      let updateUser;
-      const scrappy = await transaction(UserModel, EmployerMemberPermissionsModel,
-        async (userModel, employerMemberPermissionsModel) => {
-          updateUser = await userModel.query().findById(memberId).patch(user);
-          // delete permission
-          const numDeleted = await employerMemberPermissionsModel.query().delete().where("employer_member_id", memberId);
-          const empm = new EmployerMemberPermissionsModel();
-          empm.employer_member_id = memberId;
-          empm.employer_id = employerId;
-          const query = await Promise.all(
-            permissions.map(async (id: number) => {
-              empm.employer_permission_id = id;
-              return employerMemberPermissionsModel.query().insert(empm);
-            }));
-        });
-      logger.info("update updateEmployerMember");
-      logger.info(JSON.stringify(scrappy));
-      return updateUser;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  public async getEmployerMembers(
-    employerId = 0,
-    groupId = 0,
-    orderNo = 0,
-    page = 0, pageSize = PAGE_SIZE.Standand, groupNomalType = GROUP_NOMAL_TYPE.Nomal, 
-    isAdmin = 0
-  )
-    : Promise<any> {
-    try {
-      const orderArray = this.getOrder(orderNo);
-      let selects = [
-        "users.id", "users.email", "users.employer_title", "users.employer_id",
-        "users.email_verified", "users.status", "users.profile_picture",
-        "users.first_name", "users.last_name", "users.created_at", "users.updated_at",
-        "users.is_deleted", "users.is_user_deleted"
-      ];
-      // PERMISSION_EMPLOYER
-      if (groupId) {
-        // let query = await EmployerMemberPermissionsModel.query().select["employer_member_id"]
-        //   .where("employer_id", employerId)
-        //   .where("employer_permission_id", PERMISSION_EMPLOYER.Chat);
-        // const
-        selects.push("CGM.id as chat_group_member_id");
-        const permissionType = groupNomalType == GROUP_NOMAL_TYPE.Nomal ? PERMISSION_EMPLOYER.Chat : PERMISSION_EMPLOYER.FindCandidate;
-        return UserModel.query().select(selects)
-          .where("users.acc_type", ACCOUNT_TYPE.Employer)
-          .where("users.employer_id", employerId)
-          .where("users.is_deleted", 0)
-          .where("users.is_user_deleted", 0)
-          .whereRaw(`users.id in (select EMP.employer_member_id from employer_member_permissions as EMP where EMP.employer_id = ${employerId} and EMP.employer_permission_id = ${permissionType})`)
-          .leftJoin("chat_group_members as CGM", s => {
-            s.on("CGM.member_id", "users.id")
-              .andOnIn("CGM.group_id", [groupId]);
-          })
-          .page(page, pageSize);
-      }
-      let query = UserModel.query()
-        .select(selects)
-        .where("users.acc_type", ACCOUNT_TYPE.Employer)
-        .where("users.employer_id", employerId)
-        .where("users.is_deleted", 0)
-        .where("users.is_user_deleted", 0)
-        
-      // if(isAdmin != 1){
-      //   query = query.where("users.is_deleted", 0);
-      // }
-      return query.orderBy(orderArray[0], orderArray[1])
-      .page(page, pageSize);
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-
-
-  public async getEmployerMembersPermission(
-    memberId = 0
-  )
-    : Promise<EmployerMemberPermissionsModel[]> {
-    try {
-      return EmployerMemberPermissionsModel.query()
-        .select([
-          "employer_member_permissions.employer_permission_id"
-        ])
-        .where("employer_member_id", memberId);
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  /*============== end employer member ===============*/
-
   public async createGroupSupportChat(user: UserModel) {
     try {
       // create support group
@@ -950,44 +726,7 @@ export default class UserBll {
     }
   }
 
-  /*============== user responsive ===============*/
-  public async voteResponsive(userId: number, reporterId: number, isResponsive = 1, objecter: UserModel, groupNomalType = GROUP_NOMAL_TYPE.Nomal) {
-    try {
-      const userR = new UserResponsivesModel();
-      userR.user_id = userId;
-      userR.reporter_id = reporterId;
-      userR.group_nomal_type = groupNomalType;
-      let uRI = await UserResponsivesModel.query().findOne(userR);
-      isResponsive = isResponsive == 1 ? 1 : -1;
-      userR.is_responsive = isResponsive;
-      let userResponsive = objecter.user_responsive;
-      if (uRI) {
-        if (uRI.is_responsive != isResponsive) {
-          userResponsive = userResponsive + isResponsive - uRI.is_responsive;
-          uRI = await UserResponsivesModel.query().updateAndFetchById(uRI.id, { is_responsive: isResponsive });
-        }
-      } else {
-        userResponsive = userResponsive + isResponsive;
-        uRI = await UserResponsivesModel.query().insert(userR);
-      }
-      await this.update(objecter.id, { user_responsive: userResponsive } as UserModel);
-      return uRI;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  public async getVoteResponsive(userId: number, reporterId: number, groupNomalType = GROUP_NOMAL_TYPE.Nomal): Promise<UserResponsivesModel> {
-    try {
-      const userR = new UserResponsivesModel();
-      userR.user_id = userId;
-      userR.reporter_id = reporterId;
-      userR.group_nomal_type = groupNomalType;
-      return UserResponsivesModel.query().findOne(userR);
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  /*============== end user responsive ===============*/
+
   public checkHavePermission(adminUser: AdminModel, accType: number): boolean {
     let permitted = null;
     switch (accType) {
@@ -1276,53 +1015,5 @@ export default class UserBll {
       throw new HttpException(500, err.message);
     }
   }
-
-  public async getUserStoryInfo(userId: number): Promise<UserStoryModel[]> {
-    try {
-      const userStory = await UserStoryModel.query().where("user_id", userId);
-      return userStory;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  public async getUserStoryByToken(token: string): Promise<UserStoryModel> {
-    try {
-      const userStory = await UserStoryModel.query()
-        .select('user_story.*', "U.city_name", "U.state_name", "U.first_name", "U.last_name")
-        .where("user_story.token", token)
-        .join('users as U', "U.id", "user_story.user_id");
-      if(userStory && userStory.length > 0) return userStory[0];
-      return null;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-
-  public async createUserStoryInfo(body): Promise<any> {
-    try {
-      const userStory = await UserStoryModel.query().insert(body);
-      return userStory;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-
-  public async updateUserStoryInfo(id: number, body): Promise<any> {
-    try {
-      const userStory = await UserStoryModel.query().updateAndFetchById(id, body);
-      return userStory;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-  public async deleteUserStoryInfo(id: number): Promise<any> {
-    try {
-      const userStory = await UserStoryModel.query().deleteById(id);
-      return userStory;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-
 
 }

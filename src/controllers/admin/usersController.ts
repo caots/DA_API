@@ -1,5 +1,5 @@
-import { ACCOUNT_TYPE, EXCLUDE_CRAWL, PAGE_SIZE, USER_STATUS } from "@src/config";
-import { COMMON_ERROR, USER_MESSAGE } from "@src/config/message";
+import { ACCOUNT_TYPE, PAGE_SIZE, USER_STATUS } from "@src/config";
+import { COMMON_ERROR } from "@src/config/message";
 import { logger } from "@src/middleware";
 import { badRequest, forbidden, ok } from '@src/middleware/response';
 import AdminModel from "@src/models/admin";
@@ -76,74 +76,8 @@ export default class AdminUserController {
       next(err);
     }
   }
-  public async getCompanysExcludeCrawler(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userService = new UserService();
-      const typeExcludeCrawl = parseInt(req.param("typeExcludeCrawl", EXCLUDE_CRAWL.AGREE));
-      const name = req.param("q");
-      const companies = await userService.getAllComnpaniesExcludeCrawler(typeExcludeCrawl, name);
-      return ok(companies, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async getCompanysCrawler(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userService = new UserService();
-      const companies = await userService.getAllComnpaniesCrawler();
-      return ok(companies, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async getAllDelegateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const page = parseInt(req.param("page", 0));
-      const pageSize = parseInt(req.param("pageSize", PAGE_SIZE.Standand));
-      const orderNo = parseInt(req.param("orderNo", 0));
-      const employerId = parseInt(req.param("employerId", 0));
-      const userService = new UserService();
-      const isAdmin = 1;
-      const users = await userService.getEmployerMembers(employerId, 0, orderNo, page, pageSize, 0, isAdmin);
-      users.results = await Promise.all(
-        users.results.map(async (member: any) => {
-          const per = await userService.getEmployerMembersPermission(member.id);
-          const listPermission = per.map(item => item.employer_permission_id);
-          member.permissions = listPermission;
-          return member;
-        })
-      );
-      return ok(users, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async reassignDelegateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const delegateId = get(req, "params.id", 0);
 
-      const userService = new UserService();
-      const delegateUser = await userService.findById(delegateId);
-      if(delegateUser.email_verified == 0) return badRequest({ message: USER_MESSAGE.userNotActive }, req, res);
-      if(delegateUser.employer_id == 0) return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      const results = await userService.reassignMemberEmployer(delegateUser);
-      return ok(results, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async getCompanysCrawlerPage(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userService = new UserService();
-      const page = parseInt(req.param("page", 0));
-      const pageSize = parseInt(req.param("pageSize", PAGE_SIZE.Standand));
-      const name = req.param("q");
-      const companies = await userService.getAllComnpaniesCrawlerPage(page, pageSize, name);
-      return ok(companies, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
+ 
   public async put(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const admin = req["currentUser"];

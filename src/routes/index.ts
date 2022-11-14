@@ -4,7 +4,6 @@ import AdminRouter from "./admin/admin";
 import ApplicantRouter from "./applicant";
 import AssessmentRouter from "./assessments";
 import ContactUsRouter from "./contactUs";
-import EmployerMembersRouter from "./employerMember";
 import { FindCandidatesRouter } from "./findCandidate";
 import FollowsRouter from "./follows";
 import JobsRouter from "./jobs";
@@ -31,7 +30,6 @@ class MainRoutes {
     this.routers.use("/assessments", new AssessmentRouter().router);
     this.routers.use("/uploads", new UploadRouter().router);
     this.routers.use("/chats", new GroupChatRouter().router);
-    this.routers.use("/employers", new EmployerMembersRouter().router);
     this.routers.use("/carts", new PaymentCartsRouter().router);
     this.routers.use("/payments", new PaymentsRouter().router);
     this.routers.use("/jobseeker-follows", new FollowsRouter().router);

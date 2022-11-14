@@ -1,4 +1,4 @@
-import { ACCOUNT_TYPE, APPLICANT_STATUS, ASSESSMENTS_TYPE, EMPLOYMENT_TYPE, EXCLUDE_CRAWL, JOB_PERCENT_TRAVEL, JOB_SALARY_TYPE, JOB_SEEKER_ASSESSMENT_STATUS, JOB_STATUS, PAGE_SIZE, PROPOSED_CONPENSATION, SEARCH_JOB_TYPE, SENIORITY_LEVEL, USER_STATUS } from "@src/config";
+import { ACCOUNT_TYPE, APPLICANT_STATUS, ASSESSMENTS_TYPE, EMPLOYMENT_TYPE, JOB_PERCENT_TRAVEL, JOB_SALARY_TYPE, JOB_SEEKER_ASSESSMENT_STATUS, JOB_STATUS, PAGE_SIZE, PROPOSED_CONPENSATION, SEARCH_JOB_TYPE, SENIORITY_LEVEL, USER_STATUS } from "@src/config";
 import { JOB_TYPE } from '@src/config/index';
 import { logger } from "@src/middleware";
 import HttpException from "@src/middleware/exceptions/httpException";
@@ -11,7 +11,6 @@ import JobAssessmentsModel from "@src/models/job_assessments";
 import JobBookmarksModel from "@src/models/job_bookmarks";
 import JobCategoriesModel from "@src/models/job_categories";
 import JobLevelsModel from "@src/models/job_levels";
-import ParamsFilterCrawlModel from "@src/models/params_filter_crawler";
 import UserModel from "@src/models/user";
 import JobSeekerAssessmentsService from "@src/services/jobSeekerAssessmentsService";
 import { getOrder } from "@src/utils/jobUtils";
@@ -22,7 +21,6 @@ import Objection, { raw, transaction } from "objection";
 import UsStates from "us-state-codes";
 import Zipcodes from "zipcodes";
 import PaymentsService from "./paymentService";
-import UserBll from "./user";
 export default class JobsService {
 
   public async getJobCategories(): Promise<JobCategoriesModel[]> {
@@ -39,102 +37,6 @@ export default class JobsService {
       return result;
     } catch (err) {
       throw new HttpException(500, err.message);
-    }
-  }
-  public async getJobCrawlerById(employerId): Promise<JobsModel[]> {
-    try {
-      const result = await JobsModel.query().where("employer_id", employerId);
-      return result;
-    } catch (err) {
-      throw new HttpException(500, err.message);
-    }
-  }
-
-  //update company and job exclude
-  public async excludeCompanyCrawler(companyId: number, typeExclude): Promise<any> {
-    try {
-      const userService = new UserBll();
-      let companyCrawlExsist = await CompanyModel.query().findById(companyId);
-      if (companyCrawlExsist) {
-        if (typeExclude == EXCLUDE_CRAWL.NO) {
-          companyCrawlExsist.is_exclude = 0;
-          const companyCrawlUpdate = await CompanyModel.query().updateAndFetchById(companyCrawlExsist.id, companyCrawlExsist);
-          const listJobCrawlByEmployer = await this.getJobCrawlerById(companyCrawlUpdate.employer_id);
-          const listUserCrawlByEmployer = await UserModel.query().where("company_id", companyCrawlUpdate.id);
-          // list user
-          if (listUserCrawlByEmployer && listUserCrawlByEmployer.length > 0) {
-            const resultsUpdateUser = await Promise.all(
-              listUserCrawlByEmployer.map(async userCrawl => {
-                const updateUserCrawler: any = { is_deleted: 0 };
-                const updateData = await userService.update(userCrawl.id, updateUserCrawler);
-                return updateData;
-              })
-            )
-          }
-          // list job
-          if (listJobCrawlByEmployer && listJobCrawlByEmployer.length > 0) {
-            const results = await Promise.all(
-              listJobCrawlByEmployer.map(async jobCrawl => {
-                const updateJobCrawler: any = { ...jobCrawl, is_exclude_company: 0, is_deleted: 0 };
-                const updateData = await this.updateJob(updateJobCrawler, []);
-                 return updateData;
-              })
-            )
-            return results;
-          }
-        } else {
-          if (typeExclude == EXCLUDE_CRAWL.DEGREE) companyCrawlExsist.is_exclude = EXCLUDE_CRAWL.DEGREE;
-          else companyCrawlExsist.is_exclude = EXCLUDE_CRAWL.AGREE;
-
-          const companyCrawlUpdate = await CompanyModel.query().updateAndFetchById(companyCrawlExsist.id, companyCrawlExsist);
-          const listJobCrawlByEmployer = await this.getJobCrawlerById(companyCrawlUpdate.employer_id);
-          const listUserCrawlByEmployer = await UserModel.query().where("company_id", companyCrawlUpdate.id);
-          // list user
-          if (listUserCrawlByEmployer && listUserCrawlByEmployer.length > 0) {
-            const resultsUpdateUser = await Promise.all(
-              listUserCrawlByEmployer.map(async userCrawl => {
-                if (typeExclude == EXCLUDE_CRAWL.DEGREE) userCrawl.is_deleted = 1;
-                else userCrawl.is_deleted = 0;
-                const updateUserCrawler: any = { is_deleted: userCrawl.is_deleted };
-                const updateData = await userService.update(userCrawl.id, updateUserCrawler);
-                return updateData;
-              })
-            )
-          }
-          // list job
-          if (listJobCrawlByEmployer && listJobCrawlByEmployer.length > 0) {
-            const results = await Promise.all(
-              listJobCrawlByEmployer.map(async jobCrawl => {
-                if (typeExclude == EXCLUDE_CRAWL.DEGREE) jobCrawl.is_deleted = 1;
-                else jobCrawl.is_deleted = 0;
-                const updateJobCrawler: any = {...jobCrawl, is_exclude_company: 1 };
-                const updateData = await this.updateJob(updateJobCrawler, []);
-                return updateData;
-              })
-            )
-            return results;
-          }
-        }
-      };
-      return null;
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-  //updatejob exclude
-  public async excludeJobCrawler(jobIds: number[]): Promise<any> {
-    try {
-      logger.info(`delete job crawler ${jobIds.toString()}`);
-      return JobsModel.query().update({ is_deleted: 1, is_exclude_company: 1 }).whereIn("id", jobIds);
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-  public async updateStatusShowTextCrawl(jobId, typeStatus): Promise<any> {
-    try {
-      return JobsModel.query().update({ is_crawl_text_status: typeStatus }).where("id", jobId);
-    } catch (err) {
-      console.log('err: ', err)
     }
   }
 
@@ -180,142 +82,8 @@ export default class JobsService {
     }
   }
 
-  public async deleteConfigParamsJobCrawler(configNumber: number): Promise<any> {
-    try {
-      const listConfig = await ParamsFilterCrawlModel.query().where("config_number", configNumber);
-      // list user
-      if (listConfig && listConfig.length > 0) {
-        const resultsUpdateUser = await Promise.all(
-          listConfig.map(config => {
-            return new Promise(async (resolve, reject) => {
-              const updateData = await ParamsFilterCrawlModel.query().deleteById(config.id);
-              resolve(updateData);
-            })
-          })
-        )
-        return resultsUpdateUser;
-      }
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-  public async getConfigParamsCrawlJob(): Promise<any[]> {
-    try {
-      const listParams = await ParamsFilterCrawlModel.query();
-      let results = [];
-      if (listParams.length > 0) {
-        const listNumberConfig = listParams.map(conf => conf.config_number);
-        const listUniqueConfig = listNumberConfig.filter(this.onlyUnique);
-        listUniqueConfig.map(number => {
-          const dataConfig: any[] = this.groupArrayOfObjects(listParams, 'config_number');
-          results.push(dataConfig[number]);
-        });
-        return results;
-      }
-      return null;
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-
   private onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
-  }
-
-  public async readJsonFileConfigCrawler(configParams: any[]): Promise<any> {
-    try {
-      // update config
-      configParams.push({ label: null, name: "url", value: "https://indeed.com/jobs" });
-      configParams.push({ label: null, name: "drivertype", value: "indeed_jobs" });
-      const listParams = await this.getConfigParamsCrawlJob();
-      const maxNumber = await ParamsFilterCrawlModel.raw(`select max(config_number) as max_number from params_filter_crawler`);
-      if (listParams.length > 0) {
-        const results = await Promise.all(
-          configParams.map(config => {
-            return new Promise(async (resolve, reject) => {
-              config.config_number = maxNumber[0][0].max_number + 1;
-              const updateData = await ParamsFilterCrawlModel.query().insert(config);
-              resolve(updateData);
-            })
-          })
-        )
-        return results;
-      }
-      return null;
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-
-  public async newConfigParamsCrawlJob(index): Promise<any[]> {
-    try {
-      const listParams = await this.getConfigParamsCrawlJob();
-      const maxNumber = await ParamsFilterCrawlModel.raw(`select max(config_number) as max_number from params_filter_crawler`);
-      if (listParams.length > 0) {
-        const listConfig = listParams[index];
-        const results = await Promise.all(
-          listConfig.map(config => {
-            return new Promise(async (resolve, reject) => {
-              delete config.id;
-              config.config_number = maxNumber[0][0].max_number + 1;
-              const updateData = await ParamsFilterCrawlModel.query().insert(config);
-              resolve(updateData);
-            })
-          })
-        )
-        return results;
-      }
-      return null;
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-  public async activeJobCrawler(data): Promise<any> {
-    try {
-      const { jobIds, featured_start_date, featured_end_date, expired_at,
-        expired_days, paid_at, add_urgent_hiring_badge, expired_urgent_hiring_badge_at } = data;
-
-      const results = await Promise.all(
-        jobIds.map(id => {
-          return new Promise(async (resolve, reject) => {
-            const job = await JobsModel.query().findById(id);
-            if (job) {
-              job.featured_start_date = featured_start_date || null;
-              job.featured_end_date = featured_end_date || null;
-              job.is_make_featured = featured_start_date && featured_end_date ? 1 : 0;
-              job.expired_at = expired_at;
-              job.expired_days = expired_days;
-              job.paid_at = paid_at; 
-              job.add_urgent_hiring_badge = add_urgent_hiring_badge;
-              job.expired_urgent_hiring_badge_at = expired_urgent_hiring_badge_at;
-              job.status = JOB_STATUS.Active;
-              const updatedJob = await JobsModel.query().patchAndFetchById(job.id, job);
-              // active crawl company
-              const company = await CompanyModel.query().select("company.*")
-                .join("users as U", "U.id", "company.employer_id")
-                .join("jobs as J", "J.employer_id", "U.id")
-                .where("J.id", id);
-              if(company && company.length > 0) {
-                const updateCom = company[0];
-                updateCom.status_crawl = 1;
-                await CompanyModel.query().updateAndFetchById(updateCom.id, updateCom);
-              }
-              resolve(updatedJob);
-            }
-          })
-        })
-      )
-      return results;
-    } catch (err) {
-      console.log('err: ', err)
-    }
-  }
-  public async updateConfigParamsCrawlJob(id: number, data): Promise<any> {
-    try {
-      return ParamsFilterCrawlModel.query().updateAndFetchById(id, data);
-    } catch (err) {
-      console.log('err: ', err)
-    }
   }
 
   private groupArrayOfObjects(list, key) {

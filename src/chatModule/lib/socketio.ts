@@ -31,7 +31,6 @@ const socket = (server: any) => {
     chatService.onMessage();
     chatService.seenMessage();
     chatService.receivedMessage();
-    chatService.onRequestUnmark();
     chatService.onJoinGroup();
   });
   return io;

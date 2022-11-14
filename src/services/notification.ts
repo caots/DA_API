@@ -1,11 +1,6 @@
 import { EMIT_EVENT, ZOOM_NAME } from "@src/chatModule/lib/config";
-import { TASKSCHEDULE_STATUS, TASKSCHEDULE_TYPE } from "@src/config";
-import JobsModel from "@src/models/jobs";
-import TaskScheduleModel from "@src/models/task_schedule";
-import UserModel from "@src/models/user";
 import UserNotificationModel from "@src/models/user_notifications";
 import { NotificationRepository } from "@src/repositories/notificationRepository";
-import { TaskScheduleRepository } from "@src/repositories/taskScheduleRepository";
 import { Server } from "socket.io";
 
 export default class NotificationService {
@@ -57,45 +52,6 @@ export default class NotificationService {
     })
   }
   public async addJobTrigger(jobId: number, userId: number): Promise<any> {
-    let job: JobsModel = (await JobsModel.query().where('id', jobId))[0];
-
-    if (job == null)
-      throw ("job is not exists");
-
-    let user: UserModel = (await UserModel.query().where({ id: userId }))[0];
-    if (user == null) throw ('user not exists.')
-    let currentTask: TaskScheduleModel = (await TaskScheduleModel.query().where({
-      'user_id': userId,
-      'subject_id': jobId,
-      'status': TASKSCHEDULE_STATUS.NotRun,
-      'type': TASKSCHEDULE_TYPE.ReminderCompleteApplication
-    }))[0];
-    if (currentTask == null)
-      await TaskScheduleModel.query().insert({
-        user_id: userId,
-        subject_id: jobId,
-        type: TASKSCHEDULE_TYPE.ReminderCompleteApplication,
-        metadata: JSON.stringify({
-          user: {
-            id: user.id,
-            email: user.email,
-            acc_type: user.acc_type,
-            first_name: user.first_name,
-            last_name: user.last_name,
-          },
-          jobDetails: {
-            id: job.id,
-            title: job.title,
-            add_urgent_hiring_badge: job.add_urgent_hiring_badge,
-            city_name: job.city_name,
-            state_name: job.state_name,
-            expired_at: job.expired_at,
-          }
-        })
-      })
-    else {
-      await new TaskScheduleRepository(TaskScheduleModel).update(currentTask.id.toString(), currentTask);
-    }
   }
   public async total(userId: number): Promise<any> {
     return await UserNotificationModel.raw(`

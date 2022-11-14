@@ -1,11 +1,9 @@
-import { ACCOUNT_TYPE, ADMIN_ACCOUNT_STATUS, ADMIN_ACCOUNT_TYPE, PERMISSION_EMPLOYER } from "@src/config";
+import { ACCOUNT_TYPE, ADMIN_ACCOUNT_STATUS, ADMIN_ACCOUNT_TYPE } from "@src/config";
 import { COMMON_ERROR } from "@src/config/message";
 import AdminModel from "@src/models/admin";
 import UserModel from "@src/models/user";
-import UserBll from "@src/services/user";
 import { checkAdminPermission } from "@src/utils/checkPermission";
 import { NextFunction, Request, Response } from "express";
-import { cloneDeep } from "lodash";
 import { forbidden } from "./response";
 export const checkRole = (...permittedRoles) => {
   // return a middleware
@@ -26,27 +24,7 @@ export const checkRole = (...permittedRoles) => {
 export const permissionsEmp = (permitted: number) => {
   // return a middleware
   return async (req: Request, res: Response, next: NextFunction) => {
-    const currentUser = req["currentUser"] as UserModel;
-    // check permission member employer;
-    if (currentUser.acc_type != ACCOUNT_TYPE.Employer || currentUser.employer_id == 0) {
-      return next();
-    }
-    if (permitted == PERMISSION_EMPLOYER.NotAllow) {
-      return forbidden({ message: COMMON_ERROR.notPermission }, req, res);
-    }
-    const userService = new UserBll();
-    const permissions = await userService.getEmployerMembersPermission(currentUser.id);
-    const listPermission = permissions.map(item => item.employer_permission_id);
-    if (listPermission.includes(permitted) || permitted == PERMISSION_EMPLOYER.AllowOther) {
-      currentUser.onwer_id = cloneDeep(currentUser.id);
-      currentUser.id = currentUser.employer_id;
-      const masterUser = await userService.getById(currentUser.employer_id);
-      currentUser.companyInfo = masterUser;
-      currentUser.converge_ssl_token = masterUser.converge_ssl_token;
-
-      return next();
-    }
-    return forbidden({ message: COMMON_ERROR.notPermission }, req, res);
+    return next();
   };
 
 };

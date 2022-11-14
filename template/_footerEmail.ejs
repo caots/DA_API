@@ -1,27 +1,7 @@
 <!-- // footer -->
 <tr class="footer-not-create-account" style="text-align: center;">
-  <% if (!user) { %>
-    <td style="padding: 10px;color: #808080;" bgcolor="#f9f9f9">
-    <p style="font-family: 'Avenir-Roman', sans-serif;
-            font-size: 16px; ">© <%= currentYear %> MeasuredSkills.</p>
-    <p style="font-family: 'Avenir-Roman', sans-serif;
-            font-size: 12px; ">This message was sent to <%= recipientEmail %>. To stop receiving
-      updates
-      from
-      MeasuredSkills
-      click <a href="<%= urlUnsubcribe %>" style="color: #2668A8">unsubscribe</a>.</p>
-  </td>
-  <% } else { %>
   <td style="padding: 10px;color: #808080;" bgcolor="#f9f9f9">
     <p style="font-family: 'Avenir-Roman', sans-serif;
-                font-size: 16px; ">© <%= currentYear %> MeasuredSkills</p>
-    <p style="font-family: 'Avenir-Roman', sans-serif;
-                font-size: 12px; ">This message was sent to <%= recipientEmail %>. To adjust your
-      email
-      preferences
-      or to unsubscribe,
-      please log
-      into your <a href="<%= urlUnsubcribe %>" style="color: #2668A8">MeasuredSkills account settings.</a></p>
+            font-size: 16px; ">© <%= currentYear %> MeasuredSkills.</p>
   </td>
-  <% } %>
 </tr>

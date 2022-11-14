@@ -23,8 +23,6 @@ export default class UsersRouter {
     const imageUlti = new ImageUtils();
     this.router.post("/login", this.userController.login);
     this.router.post("/checkMail", this.userController.checkEmail);
-    this.router.post("/signupToReceiveUpdate", this.userController.signupToReceiveUpdate);
-    this.router.post("/unsubcribeReceiveUpdate", this.userController.unsubcribeReceiveUpdate);
     this.router.post("/refreshToken", this.authController.authenticateJWT, this.userController.refreshToken);
     this.router.get("/", this.authController.authenticateJWT, this.userController.get);
     this.router.put("/", this.authController.authenticateJWT, imageUlti.upload.single("profile_picture"), this.userController.put);
@@ -36,24 +34,14 @@ export default class UsersRouter {
     this.router.post("/forgotPassword", this.userController.forgotPassword);
     this.router.post("/setPassword", this.userController.setPassword);
     this.router.post("/activeAccount", this.userController.activeAccount);
-    this.router.post("/completeDelegateAccount", imageUlti.upload.single("profile_picture"), this.userController.completeDelegateAccount);
-    this.router.post("/getDelegateInfo", this.userController.getDelegateInfo);
     this.router.post("/completedSignup", this.authController.authenticateJWT, this.userController.completedSignup);
     this.router.post("/changePassword", this.authController.authenticateJWT, this.userController.changePassword);
     this.router.post("/changeEmail", this.authController.authenticateJWT, this.userController.changeEmail);
     this.router.post("/verifiedEmail", this.userController.verifiedEmail);
     this.router.get("/genReferLink", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker), this.userController.genReferLink);
     this.router.delete("/", this.authController.authenticateJWT, this.userController.deleleAccount);
-    this.router.post("/voteResponsive", this.authController.authenticateJWT, this.userController.voteResponsive);
-    this.router.get("/voteResponsive", this.authController.authenticateJWT, this.userController.getVoteResponsive);
     this.router.post("/survey", this.authController.authenticateJWT, this.userController.createSurveysUserInfo);
     this.router.get("/survey", this.authController.authenticateJWT, this.userController.getSurveysUserInfo);
     this.router.put("/survey", this.authController.authenticateJWT, this.userController.updateSurveysUserInfo);
-    // user story
-    this.router.get("/story", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker), this.userController.getAllUserStory);
-    this.router.get("/story/token", this.userController.getUserStoryByToken);
-    this.router.post("/story", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker),this.userController.createUserStory);
-    this.router.put("/story/:id", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker),this.userController.updateUserStory);
-    this.router.delete("/story/:id", this.authController.authenticateJWT, checkRole(ACCOUNT_TYPE.JobSeeker),this.userController.deleteUserStory);
   }
 }

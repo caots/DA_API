@@ -1,14 +1,11 @@
-import { GROUP_NOMAL_TYPE } from "@src/chatModule/lib/config";
 import { ACCOUNT_TYPE, COMMON_STATUS, NOTIFICATION_TYPE } from "@src/config";
 import { COMMON_ERROR, COMMON_SUCCESS, USER_MESSAGE } from "@src/config/message";
 import { logger } from "@src/middleware";
 import { badRequest, created, ok, unAuthorize } from "@src/middleware/response";
-import UserModel, { UserSubcribesModel } from "@src/models/user";
+import UserModel from "@src/models/user";
 import UserNotificationModel from "@src/models/user_notifications";
-import { UserResponsivesModel } from "@src/models/user_password_reset";
 import BillingSettingsService from "@src/services/billingSettingsService";
 import NotificationService from "@src/services/notification";
-import PaymentsService from "@src/services/paymentService";
 import UserService from "@src/services/user";
 import UserSessionBll from "@src/services/userSession";
 import ImageUtils from "@src/utils/image";
@@ -16,12 +13,10 @@ import PhoneNumberUtils from "@src/utils/phoneNumber";
 import MailUtils from "@src/utils/sendMail";
 import { mapUserAndCompanyData } from "@src/utils/userUtils";
 import MsValidate from "@src/utils/validate";
-import bcrypt from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import { get } from "lodash";
 import moment from "moment";
 import passport from "passport";
-import requestIp from 'request-ip';
 
 export default class UserController {
 
@@ -33,16 +28,6 @@ export default class UserController {
           if (err) return next(err);
           if (user) {
             const userService = new UserService();
-            // check black list user
-            // const ip = req.socket?.remoteAddress || null;
-            const ip = requestIp.getClientIp(req) || null;
-            const isBackListUser = await userService.checkBackListUser(user?.email, ip);
-            if (!isBackListUser) return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-            // update ip address user
-            console.log('ip_address: ', ip);
-            const isExisted = await userService.updateUserIPAddress(user.id, ip);
-            if (isExisted < 0) return next({ message: COMMON_ERROR.pleaseTryAgain });
-
             const remember_me = req.body.remember_me ? true : false;
             const userSessionBll = new UserSessionBll();
             const result = await userSessionBll.create(user, remember_me);
@@ -100,46 +85,6 @@ export default class UserController {
       if (userInfo.is_deleted) {
         return unAuthorize({}, req, res);
       }
-      const paymentService = new PaymentsService();
-      if (userInfo.acc_type == ACCOUNT_TYPE.Employer && userInfo.employer_id != 0) {
-        const userResponse = new UserModel();
-        userResponse.id = userInfo.id;
-        userResponse.first_name = userInfo.first_name;
-        userResponse.last_name = userInfo.last_name;
-        userResponse.acc_type = userInfo.acc_type;
-        userResponse.created_at = userInfo.created_at;
-        userResponse.updated_at = userInfo.updated_at;
-        userResponse.email_verified = userInfo.email_verified;
-        userResponse.is_deleted = userInfo.is_deleted;
-        userResponse.is_user_deleted = userInfo.is_user_deleted;
-        userResponse.employer_title = userInfo.employer_title;
-        userResponse.employer_id = userInfo.employer_id;
-        userResponse.profile_picture = userInfo.profile_picture;
-        userResponse.sign_up_step = userInfo.sign_up_step;
-        userResponse.chat_group_id = userInfo.chat_group_id;
-        userResponse.converge_ssl_token = userInfo.converge_ssl_token;
-        userResponse.email = userInfo.email;
-        userResponse.address_line = userInfo.address_line;
-        userResponse.phone_number = userInfo.phone_number;
-        userResponse.region_code = userInfo.region_code;
-        userResponse.zip_code = userInfo.zip_code;
-        userResponse.is_take_first_assessment = userInfo.is_take_first_assessment;
-
-        const $per = userService.getEmployerMembersPermission(user.id);
-        let $employer = userService.getById(userInfo.employer_id);
-        const results = await Promise.all([$per, $employer]);
-        const per = results[0];
-        const listPermission = per.map(item => item.employer_permission_id);
-        userResponse["permissions"] = listPermission;
-        const $companyInfo = await userService.getCompanyById(userInfo.company_id);
-        const employerInfo = {...$companyInfo, ...results[1] };
-        userResponse["employer_info"] = employerInfo;
-        const billing = await paymentService.getBillingInfo(userInfo.employer_id);
-        userResponse["billingInfo"] = billing;
-        return ok(userResponse, req, res);
-      }
-      const billing = await paymentService.getBillingInfo(user.id);
-      userInfo["billingInfo"] = billing;
       return ok(userInfo, req, res);
     } catch (err) {
       next(err);
@@ -430,11 +375,6 @@ export default class UserController {
       delete req.body["ref"];
       const body = await msValidate.validateSignup(req.body);
       const userService = new UserService();
-      // check black list user
-      // const ip = req.socket?.remoteAddress || null;
-      const ip = requestIp.getClientIp(req) || null;
-      const isBackListUser = await userService.checkBackListUser(body.email, ip);
-      if (!isBackListUser) return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
       // check validate phone
       const phoneUtils = new PhoneNumberUtils();
       const isvalid = phoneUtils.phoneNumberValidator(body.phone_number, body.region_code);
@@ -449,8 +389,6 @@ export default class UserController {
       delete body.verified_code;
       const isExisted = await userService.findByEmailSafe(body.email);
       if (isExisted) { return badRequest({ message: USER_MESSAGE.emailAlreadyExists }, req, res); }
-
-      body.ip_address = ip;
       const user = await userService.create(body);
       if (user) {
         // creat group
@@ -590,39 +528,6 @@ export default class UserController {
       next(err);
     }
   }
-  public async voteResponsive(req: Request, res: Response, next: NextFunction) {
-    try {
-      const user = req["currentUser"] as UserModel;
-      const userService = new UserService();
-      const body = req.body as UserResponsivesModel;
-      const objecter = await userService.findById(body.user_id);
-      if (!objecter || objecter.acc_type == user.acc_type) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      const reporterId = (user.acc_type == ACCOUNT_TYPE.Employer && user.employer_id > 0) ? user.employer_id : user.id;
-      await userService.voteResponsive(body.user_id, reporterId, body.is_responsive, objecter, body.group_nomal_type);
-      return ok({ message: COMMON_SUCCESS.default }, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async getVoteResponsive(req: Request, res: Response, next: NextFunction) {
-    try {
-      const user = req["currentUser"] as UserModel;
-      const userId = parseInt(req.param("user_id", 0));
-      const groupNomalType = parseInt(req.param("group_nomal_type", GROUP_NOMAL_TYPE.Nomal));
-      const userService = new UserService();
-      const objecter = await userService.findById(userId);
-      if (!objecter || objecter.acc_type == user.acc_type) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      const reporterId = (user.acc_type == ACCOUNT_TYPE.Employer && user.employer_id > 0) ? user.employer_id : user.id;
-      const result = await userService.getVoteResponsive(userId, reporterId, groupNomalType);
-      return ok(result, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
 
   public async createSurveysUserInfo(req: Request, res: Response, next: NextFunction) {
     try {
@@ -690,67 +595,7 @@ export default class UserController {
       next(err);
     }
   }
-
-  public async unsubcribeReceiveUpdate(req: Request, res: Response, next: NextFunction) {
-    try {
-      const msValidate = new MsValidate();
-      const body = await msValidate.validateUnsubcribe(req.body);
-
-      const userService = new UserService();
-      const current = await userService.findUserSubcribeByParams({ email: body.email, is_subscribe: true });
-      if (!current) return badRequest({ message: USER_MESSAGE.emailNotExists }, req, res);
-
-      const update = new UserSubcribesModel({
-        ...current,
-        is_subscribe: false,
-        reason_unsubcribe: body.reason_unsubcribe,
-        reason_unsubcribe_type: body.reason_unsubcribe_type,
-      });
-      if ((await userService.unsubcribeReceiveUpdate(update)) > 0) {
-        return created({ message: COMMON_SUCCESS.default }, req, res);
-      }
-      else
-        throw (COMMON_ERROR.pleaseTryAgain)
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async signupToReceiveUpdate(req: Request, res: Response, next: NextFunction) {
-    try {
-      // check validate
-      const msValidate = new MsValidate();
-      delete req.body["g-recaptcha-response"];
-      const body = await msValidate.validateSignupSubcribe(req.body);
-
-      // create new user
-      const userService = new UserService();
-      let user: UserSubcribesModel = null;
-      let current = await userService.findUserSubcribeByEmail(body.email, 0);
-      if (current) {
-        if (current.is_subscribe)
-          return badRequest({ message: USER_MESSAGE.emailAlreadyExistsSubcribe }, req, res);
-        else {
-          current = {
-            ...current,
-            ...body,
-            id: current.id,
-            is_subscribe: true,
-          }
-          user = await userService.updateUserSubcribe(current, current.id);
-        }
-      }
-      else
-        user = await userService.createUserSubcribe(body);
-      if (user) {
-        const mailUtil = new MailUtils();
-        mailUtil.confirmationSignupToUpdate(user.email, user.acc_type).then();
-        return created({ message: COMMON_SUCCESS.default }, req, res);
-      }
-      return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
+  
   public async getDelegateInfo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userSessionService = new UserSessionBll();
@@ -832,79 +677,4 @@ export default class UserController {
       next(err);
     }
   }
-
-  // Start user story
-  public async getAllUserStory(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userService = new UserService();
-      const user = req["currentUser"] as UserModel;
-      const result = await userService.getUserStoryInfo(user.id);
-      if (!result) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      return ok(result, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async createUserStory(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userService = new UserService();
-      const user = req["currentUser"] as UserModel;
-      let body = req.body;
-      const token = bcrypt.hashSync(`${user.id}${body.name}${moment.utc().toISOString()}`, 10);
-      body = {...body,
-         user_id: user.id, 
-         token: token
-      };
-      const result = await userService.createUserStoryInfo(body);
-      if (!result) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      return ok(result, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async getUserStoryByToken(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userService = new UserService();
-      const token = get(req, "query.token", "");
-      const result = await userService.getUserStoryByToken(token);
-      if (!result) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      return ok(result, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async updateUserStory(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userService = new UserService();
-      const id = get(req, "params.id", "");
-      let body = req.body;
-      const result = await userService.updateUserStoryInfo(id, body);
-      if (!result) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      return ok({message: 'update success'}, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  public async deleteUserStory(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userService = new UserService();
-      const id = get(req, "params.id", "");
-      const result = await userService.deleteUserStoryInfo(id);
-      if (!result) {
-        return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
-      }
-      return ok({message: 'delete success'}, req, res);
-    } catch (err) {
-      next(err);
-    }
-  }
-  // End user story
 }
