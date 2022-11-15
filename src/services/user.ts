@@ -1,7 +1,7 @@
 import { GROUP_TYPE } from "@src/chatModule/lib/config";
 import { ChatGroupMembersModel, ChatGroupsModel } from "@src/chatModule/models";
 import { ZoomService } from "@src/chatModule/service/room";
-import { ACCOUNT_TYPE, ADMIN_PERMISSION, COMMON_STATUS, JOB_SEEKER_ASSESSMENT_STATUS, NOTIFICATION_TYPE, PAGE_SIZE, USER_STATUS } from "@src/config";
+import { ACCOUNT_TYPE, ADMIN_PERMISSION, COMMON_STATUS, JOB_SEEKER_ASSESSMENT_STATUS, PAGE_SIZE, USER_STATUS } from "@src/config";
 import HttpException from "@src/middleware/exceptions/httpException";
 import logger from "@src/middleware/logger";
 import AdminModel from "@src/models/admin";
@@ -10,7 +10,6 @@ import CompanyReportsModel, { JobSeekerRattingsModel } from "@src/models/company
 import FindCandidateLogsModel from "@src/models/find_candidate_logs";
 import JobAssessmentsModel from "@src/models/job_assessments";
 import UserModel, { UserSubcribesModel } from "@src/models/user";
-import UserNotificationModel from "@src/models/user_notifications";
 import { UserEmailChangesModel, UserRefersModel } from "@src/models/user_password_reset";
 import UserSessionModel from "@src/models/user_session";
 import UserSurveysModel from "@src/models/user_surveys";
@@ -26,7 +25,6 @@ import { JOBSEEKER_RATTING_TYPE } from './../config/index';
 import BillingSettingsService from "./billingSettingsService";
 import JobSeekerAssessmentsService from "./jobSeekerAssessmentsService";
 import JobsService from "./jobsService";
-import NotificationService from "./notification";
 export default class UserBll {
   private userRps: UserRepository;
 
@@ -683,19 +681,6 @@ export default class UserBll {
       const addNbrCredit = Math.ceil((jobSeekerSettings.nbr_referral_for_one_validation) * 1000) / 1000;
       updateUSer.nbr_credits = referUser.nbr_credits + addNbrCredit;
       const user = await this.update(referUser.id, updateUSer);
-      new NotificationService().insert({
-        data: new UserNotificationModel({
-          user_id: referUser.id,
-          type: NOTIFICATION_TYPE.ReferralCredit,
-          user_acc_type: ACCOUNT_TYPE.JobSeeker,
-          metadata: JSON.stringify({
-            register_id: userRegister.id,
-            first_name: userRegister.first_name,
-            last_name: userRegister.last_name,
-          })
-        })
-      })
-
       //send mail
       const mailUtil = new MailUtils();
       const registUser = await this.findById(userRefer.register_id);

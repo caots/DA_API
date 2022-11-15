@@ -1,2 +1,0 @@
-ALTER TABLE `admins`
-ADD COLUMN `permission` VARCHAR(15) DEFAULT NULL;

@@ -2,7 +2,7 @@ import { ZoomService } from "@src/chatModule/service/room";
 import {
   ACCOUNT_TYPE, ASSESSMENTS_TYPE, ASSESSMENT_STATUS, JOBSEEKER_RATTING_TYPE,
   JOB_SALARY_TYPE, JOB_SEEKER_ASSESSMENT_STATUS,
-  JOB_STATUS, NOTIFICATION_TYPE, PAGE_SIZE, USER_STATUS
+  JOB_STATUS, PAGE_SIZE, USER_STATUS
 } from "@src/config";
 import { logger } from "@src/middleware";
 import HttpException from "@src/middleware/exceptions/httpException";
@@ -10,14 +10,12 @@ import FindCandidateLogsModel, { PotentialCandidatesModel } from "@src/models/fi
 import JobApplicantsModel from "@src/models/job_applicants";
 import JobAssessmentsModel from "@src/models/job_assessments";
 import { default as UserModel } from "@src/models/user";
-import UserNotificationModel from "@src/models/user_notifications";
 import { cloneDeep } from "lodash";
 import { raw } from "objection";
 import Zipcodes from "zipcodes";
 import JobsApplicantService from "./jobsApplicantService";
 import JobSeekerAssessmentsService from "./jobSeekerAssessmentsService";
 import JobsService from "./jobsService";
-import NotificationService from "./notification";
 import UserBll from "./user";
 export default class FindCandidateService {
   constructor() {
@@ -226,27 +224,6 @@ export default class FindCandidateService {
           if (jobSeekerAssessments && jobSeekerAssessments.length > 0) {
             total_point = jobSeekerAssessments.map(c => (c.job_seeker_point || 0)).reduce((a, b) => a + b);
           }
-
-          new NotificationService().insert({
-            data: new UserNotificationModel({
-              user_id: jobseekerId,
-              user_acc_type: ACCOUNT_TYPE.JobSeeker,
-              type: NOTIFICATION_TYPE.JobseekerIsInvited,
-              metadata: JSON.stringify({
-                jobDetails: [currentJob].map(e => ({
-                  id: e.id,
-                  title: e.title,
-                  employer_id: e.employer_id,
-                  add_urgent_hiring_badge: e.add_urgent_hiring_badge,
-                  expired_at: e.expired_at,
-                  city_name: e.city_name,
-                  state_name: e.state_name,
-                  country_name: e.country_name,
-                }))[0],
-                // jobSeekerAssessments
-              }),
-            })
-          });
 
           const applicantBody = new JobApplicantsModel();
           applicantBody.job_sekker_id = jobseekerId;

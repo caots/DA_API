@@ -10,15 +10,16 @@ export default class MailUtils {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: config.MAIL_HOST,
-      // port: 2525,
-      secure: false, // true for 465, false for other ports
+      port: 465,
+      //service: config.MAIL_HOST,
+      // secure: false, // true for 465, false for other ports
       auth: {
-        user: config.MAIL_USERNAME || "AKIAYNIC7LEIRNHRBMEG", // generated ethereal user
-        pass: config.MAIL_PASSWORD || "BKhIzz15ygI/LfuTDXCiQK2EigsnfwDKUR5XrT20DfEM", // generated ethereal password
+        user: config.MAIL_USERNAME, // generated ethereal user
+        pass: config.MAIL_PASSWORD, // generated ethereal password
       },
-      tls: {
-        rejectUnauthorized: false,
-      },
+      // tls: {
+      //   rejectUnauthorized: false,
+      // },
     });
   }
   // 1

@@ -1,11 +1,9 @@
-import { ACCOUNT_TYPE, COMMON_STATUS, NOTIFICATION_TYPE } from "@src/config";
+import { ACCOUNT_TYPE, COMMON_STATUS } from "@src/config";
 import { COMMON_ERROR, COMMON_SUCCESS, USER_MESSAGE } from "@src/config/message";
 import { logger } from "@src/middleware";
 import { badRequest, created, ok, unAuthorize } from "@src/middleware/response";
 import UserModel from "@src/models/user";
-import UserNotificationModel from "@src/models/user_notifications";
 import BillingSettingsService from "@src/services/billingSettingsService";
-import NotificationService from "@src/services/notification";
 import UserService from "@src/services/user";
 import UserSessionBll from "@src/services/userSession";
 import ImageUtils from "@src/utils/image";
@@ -491,13 +489,6 @@ export default class UserController {
       }
       const userResult = await userService.updatePassword(isExisted.id, userUpdate as UserModel);
 
-      new NotificationService().insert({
-        data: new UserNotificationModel({
-          user_id: userResult.id,
-          user_acc_type: userResult.acc_type,
-          type: NOTIFICATION_TYPE.PasswordChange,
-        })
-      });
       return ok({ message: COMMON_SUCCESS.default }, req, res);
     } catch (err) {
       next(err);
@@ -655,21 +646,6 @@ export default class UserController {
           auth_info,
           user_info: user
         };
-
-        await new NotificationService().insert({
-          data: new UserNotificationModel({
-            user_id: user.employer_id,
-            user_acc_type: user.acc_type,
-            type: NOTIFICATION_TYPE.AccountActiveInvite,
-            metadata: JSON.stringify({
-              id: user.id,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              email: user.email,
-              profile_picture: user.profile_picture,
-            }),
-          })
-        });
 
         return created(data, req, res);
       }
