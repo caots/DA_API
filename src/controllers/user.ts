@@ -3,7 +3,6 @@ import { COMMON_ERROR, COMMON_SUCCESS, USER_MESSAGE } from "@src/config/message"
 import { logger } from "@src/middleware";
 import { badRequest, created, ok, unAuthorize } from "@src/middleware/response";
 import UserModel from "@src/models/user";
-import BillingSettingsService from "@src/services/billingSettingsService";
 import UserService from "@src/services/user";
 import UserSessionBll from "@src/services/userSession";
 import ImageUtils from "@src/utils/image";
@@ -121,13 +120,13 @@ export default class UserController {
           }
         }
         // add free credits employer
-        if (currentUser.acc_type == ACCOUNT_TYPE.Employer && currentUser.nbr_free_credits == 0) {
-          const billingSettingsService = new BillingSettingsService();
-          const employerSettings = await billingSettingsService.getSystemSettingsForEmployer();
-          if (employerSettings.free_direct_message) {
-            body.nbr_free_credits = employerSettings.free_direct_message;
-          }
-        };
+        // if (currentUser.acc_type == ACCOUNT_TYPE.Employer && currentUser.nbr_free_credits == 0) {
+        //   const billingSettingsService = new BillingSettingsService();
+        //   const employerSettings = await billingSettingsService.getSystemSettingsForEmployer();
+        //   if (employerSettings.free_direct_message) {
+        //     body.nbr_free_credits = employerSettings.free_direct_message;
+        //   }
+        // };
       }
       const update = await userService.update(currentUser.id, body);
       if (update) {
@@ -157,13 +156,13 @@ export default class UserController {
       }
       if (bodyUser.sign_up_step == 2) {
         // add free credits employer
-        if (currentUser.acc_type == ACCOUNT_TYPE.Employer && currentUser.nbr_free_credits == 0) {
-          const billingSettingsService = new BillingSettingsService();
-          const employerSettings = await billingSettingsService.getSystemSettingsForEmployer();
-          if (employerSettings.free_direct_message) {
-            bodyUser.nbr_free_credits = employerSettings.free_direct_message;
-          }
-        };
+        // if (currentUser.acc_type == ACCOUNT_TYPE.Employer && currentUser.nbr_free_credits == 0) {
+        //   const billingSettingsService = new BillingSettingsService();
+        //   const employerSettings = await billingSettingsService.getSystemSettingsForEmployer();
+        //   if (employerSettings.free_direct_message) {
+        //     bodyUser.nbr_free_credits = employerSettings.free_direct_message;
+        //   }
+        // };
       }
       bodyUser.sign_up_step = 2;
       const update = await userService.update(updateUser.id, bodyUser);
@@ -268,13 +267,13 @@ export default class UserController {
         const updateRefUser = await userService.appliedLogicReferLink(refUser);
       }
       // add free credits employer
-      if (currentUser.acc_type == ACCOUNT_TYPE.Employer && currentUser.nbr_free_credits == 0) {
-        const billingSettingsService = new BillingSettingsService();
-        const employerSettings = await billingSettingsService.getSystemSettingsForEmployer();
-        if (employerSettings.free_direct_message) {
-          body.nbr_free_credits = employerSettings.free_direct_message;
-        }
-      };
+      // if (currentUser.acc_type == ACCOUNT_TYPE.Employer && currentUser.nbr_free_credits == 0) {
+      //   const billingSettingsService = new BillingSettingsService();
+      //   const employerSettings = await billingSettingsService.getSystemSettingsForEmployer();
+      //   if (employerSettings.free_direct_message) {
+      //     body.nbr_free_credits = employerSettings.free_direct_message;
+      //   }
+      // };
       const update = await userService.update(currentUser.id, body);
       if (update) {
         delete update.password;

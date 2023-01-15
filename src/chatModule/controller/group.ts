@@ -59,12 +59,7 @@ export default class GroupController {
       const page = parseInt(req.param("page", 0));
       const pageSize = parseInt(req.param("pageSize", 0));
       const groupId = get(req, "params.id", 0);
-      // const ownerId = parseInt(req.param("ownerId", null));
-      // const jobId = parseInt(req.param("jobId", null));
-      // let jobSeekerId = parseInt(req.param("jobSeekerId", 0));
       const zoomService = new ZoomService(null, null);
-      // const jobsApplicantService = new JobsApplicantService();
-      // const userService = new UserBll();
       const checkGroupExist = await zoomService.getOrCreateGroup(groupId);
       const info = {} as IGroupInfoEntities;
       if (!checkGroupExist.groupInfo || !checkGroupExist.groupInfo.id) {
@@ -81,15 +76,10 @@ export default class GroupController {
       if (checkGroupExist.isNew) {
         info.messages = { results: [], total: 0 };
       }
-      // if (checkGroupExist.groupInfo.type == GROUP_TYPE.Nomal) {
-      //   jobSeekerId = checkGroupExist.groupInfo.member_id;
-      // }
       const messagesPromise = zoomService.getGroupNomalHistory(groupId, page, pageSize);
       const results = await Promise.all([messagesPromise]);
       info.messages = results[0];
-      // info.jobSeeker = results[1];
       return ok(info, req, res);
-      // return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
     } catch (err) {
       next(err);
     }

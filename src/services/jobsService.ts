@@ -99,8 +99,9 @@ export default class JobsService {
       if (user && user.acc_type == ACCOUNT_TYPE.Employer && !user["admin"]) {
         const employerId = user.employer_id ? user.employer_id : user.id;
         query = query.where(builder =>
-          builder.where("assessments.type", ASSESSMENTS_TYPE.IMocha)
-            .orWhere("assessments.employer_id", employerId));
+          builder.where("assessments.employer_id", employerId));
+          // builder.where("assessments.type", ASSESSMENTS_TYPE.IMocha)
+            // .orWhere("assessments.employer_id", employerId));
       }
       let orderArray = ["name", "asc"];
       const result = categoryId ? 
