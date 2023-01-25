@@ -4,7 +4,6 @@ import HttpException from "@src/middleware/exceptions/httpException";
 import { ChatReportsModel } from "@src/models/company_reports";
 import { PotentialCandidatesModel } from "@src/models/find_candidate_logs";
 import JobApplicantsModel from "@src/models/job_applicants";
-import moment from "moment";
 import { raw, transaction } from "objection";
 import { Server, Socket } from "socket.io";
 import { CHAT_CONTENT_TYPE, CHAT_GROUP_STATUS, GROUP_NOMAL_TYPE, GROUP_TYPE } from "../lib/config";
@@ -67,8 +66,7 @@ export class ZoomService {
         "JA.total_point",
         // "PC.can_view_profile as can_view_profile"
       ];
-      const select = await raw(`if(chat_groups.group_nomal_type = 0, JA.can_view_profile, PC.can_view_profile ) as can_view_profile`);
-      selects.push(select);
+
       let orders = [];
       if (!isGroup) {
         orders = ["msg_last_time_send_message", "desc"];
@@ -79,7 +77,7 @@ export class ZoomService {
           orders = ["chat_groups.group_nomal_type", "desc", "job_id", "desc"];
         }
       }
-      const expired_at = moment().utc().format("YYYY-MM-DD HH:mm:ss");
+
       let query = ChatGroupsModel.query().where("chat_groups.type", GROUP_TYPE.Nomal);
       if (accType == ACCOUNT_TYPE.JobSeeker) {
         const select = [

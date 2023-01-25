@@ -126,6 +126,24 @@ export default class JobSeekerAssessmentsService {
       return null
     }
   }
+  public async updateJsaLog(id: number, model: JobSeekerAssessmentLogsModel): Promise<JobSeekerAssessmentLogsModel> {
+    try {
+      const newAssessment = await JobSeekerAssessmentLogsModel.query().updateAndFetchById(id, model);
+      return newAssessment;
+    } catch (err) {
+      return null
+    }
+  }
+  public async findByUserAndAssessment(jobSeekerId: number, jobSeekerAssessmentId: number): Promise<JobSeekerAssessmentLogsModel> {
+    try {
+      const newAssessment = await JobSeekerAssessmentLogsModel.query()
+        .where("job_seeker_assessment_id", jobSeekerAssessmentId)
+        .where("job_seeker_id", jobSeekerId);
+      return newAssessment[0];
+    } catch (err) {
+      throw new HttpException(500, err.message);
+    }
+  }
   public async getJsaLog(jsaId: number, jsId: number, status: string): Promise<JobSeekerAssessmentLogsModel> {
     try {
       const newAssessment = await JobSeekerAssessmentLogsModel.query()

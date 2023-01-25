@@ -42,7 +42,7 @@ export default class AssessmentsController {
       const employerId = user && user.acc_type == ACCOUNT_TYPE.Employer ? user.id : 0;
       const status = ASSESSMENT_STATUS.Active;
       let data = await assessmentsService.getAssessMents(categoryId, jobseekerId, status, onlyViewMyAssessment, q, page, pageSize, employerId, isGetFromHomePage);
-      if(data && data.results.length > 0){
+      if (data && data.results.length > 0) {
         const updateResults = await Promise.all(
           data.results.map(async (assessment: AssessmentsModel) => {
             assessment['categories'] = await jobService.getAssessmentCategory(assessment.id);
@@ -61,9 +61,9 @@ export default class AssessmentsController {
     try {
       const assessmentsService = new AssessmentsService();
       const assessmentIds = JSON.parse(req.param("ids", []));
-      if(assessmentIds.length == 0) return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
+      if (assessmentIds.length == 0) return badRequest({ message: COMMON_ERROR.pleaseTryAgain }, req, res);
       const results = await assessmentsService.getAssessmentsUserStory(assessmentIds);
-      if(results.length > 0){
+      if (results.length > 0) {
         const httpUtil = new HttpRequestUtils();
         const data = await Promise.all(
           results.map(async (assessment) => {
@@ -201,7 +201,12 @@ export default class AssessmentsController {
       if (jsa) {
         jsaLog.job_seeker_assessment_id = jsa.id;
       }
-      const result = await jsaService.addJsaLog(jsaLog);
+      const isExistedJsaLog = await jsaService.findByUserAndAssessment(user.id, jsa.id);
+      if (!isExistedJsaLog) {
+        await jsaService.addJsaLog(jsaLog);
+      } else {
+        await jsaService.updateJsaLog(isExistedJsaLog.id, jsaLog);
+      }
       if (!jsa) {
         return ok({ message: "not jsa" }, req, res);
       }
@@ -463,10 +468,10 @@ export default class AssessmentsController {
         body.TotalScore = parseFloat(body.TotalScore);
         body.weight = parseFloat((body.CandidateScore * 100 / body.TotalScore).toFixed(2));
       }
-      const validAtribute = pick(body, ['Status', 'TotalScore', 'CandidateScore', 'CandidateEmailId','AttemptedOnUtc','ReportPDFUrl',
-      'TestInvitationId','PerformanceCategory', 'AttemptedOn', 'weight', 'job_seeker_id', 'job_seeker_assessment_id']);
+      const validAtribute = pick(body, ['Status', 'TotalScore', 'CandidateScore', 'CandidateEmailId', 'AttemptedOnUtc', 'ReportPDFUrl',
+        'TestInvitationId', 'PerformanceCategory', 'AttemptedOn', 'weight', 'job_seeker_id', 'job_seeker_assessment_id']);
       Object.assign(jsaLog, validAtribute);
-      
+
       logger.info("before add jsalog:");
       logger.info(JSON.stringify(jsaLog));
       const jsa = await jsaService.findByTestInvitationId(jsaLog.TestInvitationId);
@@ -480,27 +485,27 @@ export default class AssessmentsController {
       const jsaUpdate = new JobSeekerAssessmentsModel();
 
       // check duplicate success callback       
-      if(jsaLog.Status == JOB_SEEKER_ASSESSMENT_LOG_STATUS.Complete){
+      if (jsaLog.Status == JOB_SEEKER_ASSESSMENT_LOG_STATUS.Complete) {
         const duplicateJsaLog = await jsaService.findByLogJobseekerAssessment(jsaLog.TestInvitationId, jsaLog.Status, jsaLog.AttemptedOnUtc);
-        if(duplicateJsaLog){
+        if (duplicateJsaLog) {
           result = duplicateJsaLog;
           if (!jsa.totalTake) {
             jsaUpdate.totalTake = 1;
-          }else {
+          } else {
             jsaUpdate.totalTake = jsa.totalTake + 1;
           }
-        }else {
+        } else {
           if (!jsa.totalTake) jsaUpdate.totalTake = 1;
           result = await jsaService.addJsaLog(jsaLog);
         }
-      }else {
+      } else {
         result = await jsaService.addJsaLog(jsaLog);
       }
       switch (jsaLog.Status) {
         case JOB_SEEKER_ASSESSMENT_LOG_STATUS.InProgress:
           if (!jsa.totalTake) {
             jsaUpdate.totalTake = 1;
-          }else {
+          } else {
             jsaUpdate.totalTake = jsa.totalTake + 1;
           }
           break;
@@ -524,7 +529,7 @@ export default class AssessmentsController {
           // await analyticUtils.logEvents(user, assessment, jsaLog.weight);
 
           //take success fist assessment : is_take_first_assessment
-          if(user.is_take_first_assessment != 1){
+          if (user.is_take_first_assessment != 1) {
             user.is_take_first_assessment = 1;
             await userService.update(user.id, user);
             // send message survey
